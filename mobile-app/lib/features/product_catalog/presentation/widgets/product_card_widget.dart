@@ -1,4 +1,4 @@
-import 'package:flutter/material';
+import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/entities/product.dart';
 
@@ -52,7 +52,7 @@ class ProductCardWidget extends StatelessWidget {
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.emerald),
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
                           ),
                         ),
                       ),
@@ -72,7 +72,7 @@ class ProductCardWidget extends StatelessWidget {
                     top: 10,
                     left: 10,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, py: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.6),
                         borderRadius: BorderRadius.circular(8),
@@ -94,7 +94,7 @@ class ProductCardWidget extends StatelessWidget {
                       top: 10,
                       right: 10,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, py: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.redAccent,
                           borderRadius: BorderRadius.circular(8),
@@ -156,12 +156,12 @@ class ProductCardWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.between,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         '\$${product.price.toStringAsFixed(2)}',
                         style: const TextStyle(
-                          color: Colors.emerald,
+                          color: Color(0xFF10B981),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -169,13 +169,13 @@ class ProductCardWidget extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.emerald.withOpacity(0.1),
+                          color: Color(0xFF10B981).withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.add_shopping_cart,
                           size: 16,
-                          color: Colors.emerald,
+                          color: Color(0xFF10B981),
                         ),
                       ),
                     ],

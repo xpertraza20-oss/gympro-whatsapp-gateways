@@ -1,4 +1,4 @@
-import 'package:dio/dio';
+import 'package:dio/dio.dart';
 import 'auth_interceptor.dart';
 
 class DioClient {

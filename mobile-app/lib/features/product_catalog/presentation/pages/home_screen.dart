@@ -1,8 +1,10 @@
-import 'package:flutter/material';
-import 'package:flutter_bloc/flutter_bloc';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/product_bloc.dart';
 import '../bloc/product_event.dart';
 import '../bloc/product_state.dart';
+import '../../../auth/presentation/bloc/phone_auth_bloc.dart';
+import '../../../auth/presentation/pages/phone_input_screen.dart';
 import '../widgets/product_card_widget.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -63,27 +65,44 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        backgroundColor: Colors.emerald,
+        backgroundColor: const Color(0xFF10B981),
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: 'Logout',
+            onPressed: () {
+              context.read<PhoneAuthBloc>().add(LogoutEvent());
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
             onPressed: () {},
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          context.read<ProductBloc>().add(const FetchProductsEvent(isRefresh: true));
+      body: BlocListener<PhoneAuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthInitial) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const PhoneInputScreen()),
+              (route) => false,
+            );
+          }
         },
-        color: Colors.emerald,
-        child: BlocBuilder<ProductBloc, ProductState>(
-          builder: (context, state) {
-            if (state is ProductLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: Colors.emerald),
-              );
-            }
+        child: RefreshIndicator(
+          onRefresh: () async {
+            context.read<ProductBloc>().add(const FetchProductsEvent(isRefresh: true));
+          },
+          color: const Color(0xFF10B981),
+          child: BlocBuilder<ProductBloc, ProductState>(
+            builder: (context, state) {
+              if (state is ProductLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF10B981)),
+                );
+              }
 
             if (state is ProductError) {
               return Center(
@@ -109,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onPressed: () {
                           context.read<ProductBloc>().add(const FetchProductsEvent(isRefresh: true));
                         },
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.emerald),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white),
                         child: const Text('Try Again'),
                       ),
                     ],
@@ -132,14 +151,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Metric / Category quick view ribbon
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    color: Colors.emerald.withOpacity(0.05),
+                    color: const Color(0xFF10B981).withOpacity(0.05),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.between,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Loaded ${products.length} Products',
                           style: const TextStyle(
-                            color: Colors.emerald,
+                            color: Color(0xFF10B981),
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -147,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (state.hasReachedMax)
                           const Text(
                             'All Items Loaded',
-                            style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.w650),
+                            style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.w600),
                           )
                         else
                           const Text(
@@ -201,8 +220,9 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSkeletonCard() {
     return Card(
@@ -237,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(height: 10, width: 60, color: Colors.grey[200]),
             const SizedBox(height: 12),
             Row(
-              mainAxisAlignment: MainAxisAlignment.between,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(height: 14, width: 40, color: Colors.grey[200]),
                 Container(height: 24, width: 24, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey[200])),

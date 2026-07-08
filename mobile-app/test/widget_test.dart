@@ -30,7 +30,10 @@ void main() {
 
     // Build our app and trigger a frame.
     await tester.pumpWidget(
-      MyApp(getProductsUseCase: getProductsUseCase),
+      MyApp(
+        getProductsUseCase: getProductsUseCase,
+        isAuthenticated: true,
+      ),
     );
 
     // Trigger initial frame loads

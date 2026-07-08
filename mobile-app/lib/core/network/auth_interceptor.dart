@@ -1,17 +1,18 @@
 import 'dart:async';
-import 'package:dio/dio';
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Custom interceptor to handle dynamic JWT bearer token injections
 /// and handle 401 Unauthorized exceptions (e.g. token refresh flows).
 class AuthInterceptor extends Interceptor {
-  // Mock Storage or Token Supplier interface
+  final _secureStorage = const FlutterSecureStorage();
+
   Future<String?> _getAccessToken() async {
-    // In production, fetch this from secure storage (e.g. flutter_secure_storage)
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mockTokenPayload"; 
+    return await _secureStorage.read(key: 'jwt_access_token');
   }
 
   Future<String?> _getRefreshToken() async {
-    return "mock_refresh_token_value";
+    return await _secureStorage.read(key: 'jwt_refresh_token');
   }
 
   @override
