@@ -10,6 +10,7 @@ import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/bloc/phone_auth_bloc.dart';
 import 'features/auth/presentation/pages/login_screen.dart';
 import 'features/auth/presentation/pages/signup_screen.dart';
+import 'features/auth/presentation/pages/welcome_screen.dart';
 import 'features/product_catalog/data/datasources/product_remote_data_source.dart';
 import 'features/product_catalog/data/repositories/product_repository_impl.dart';
 import 'features/product_catalog/domain/usecases/get_products_usecase.dart';
@@ -124,10 +125,11 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             fontFamily: 'Roboto',
           ),
-          home: isAuthenticated ? const HomeScreen() : const LoginScreen(),
+          home: isAuthenticated ? const HomeScreen() : const WelcomeScreen(),
           routes: {
             '/home': (context) => const HomeScreen(),
             '/login': (context) => const LoginScreen(),
+            '/welcome': (context) => const WelcomeScreen(),
           },
         ),
       ),
