@@ -9,6 +9,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { getSwal, showToast } from '../utils/alerts';
+import { formatPrice } from '../utils/config';
 
 interface OrderItem {
   id: string;
@@ -165,7 +166,7 @@ export default function OrdersTable() {
                       {order.itemsCount} items
                     </td>
                     <td className="px-6 py-4 font-semibold text-text-primary">
-                      ${order.totalAmount.toFixed(2)}
+                      {formatPrice(order.totalAmount)}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold border ${getStatusStyle(order.status)}`}>

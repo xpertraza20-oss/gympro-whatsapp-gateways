@@ -42,6 +42,30 @@ const initializeDatabase = async () => {
     await client.query(createProductsTable);
     console.log('Products table checked/created.');
 
+    // 2.1. Create users table
+    const createUsersTable = `
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        phone_number VARCHAR(50) UNIQUE NOT NULL,
+        name VARCHAR(255),
+        email VARCHAR(255),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    await client.query(createUsersTable);
+    console.log('Users table checked/created.');
+
+    // 2.2. Create otps table
+    const createOtpsTable = `
+      CREATE TABLE IF NOT EXISTS otps (
+        phone_number VARCHAR(50) PRIMARY KEY,
+        otp VARCHAR(6) NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+      );
+    `;
+    await client.query(createOtpsTable);
+    console.log('OTPs table checked/created.');
+
     // 3. Create B-Tree index on products(category_id)
     const createCategoryIdx = `
       CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);

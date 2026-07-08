@@ -8,12 +8,14 @@ import {
   Users
 } from 'lucide-react';
 
+import { formatPrice } from '../utils/config';
+
 export default function AnalyticsView() {
   const reports = [
-    { label: 'Weekly Revenue', val: '$14,248.50', rate: '+12.5%', dir: 'up', icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { label: 'Weekly Revenue', val: formatPrice(14248.50), rate: '+12.5%', dir: 'up', icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     { label: 'Conversion Rate', val: '3.42%', rate: '+0.8%', dir: 'up', icon: TrendingUp, color: 'text-blue-400', bg: 'bg-blue-500/10' },
     { label: 'Customer Retention', val: '78.5%', rate: '-1.2%', dir: 'down', icon: Users, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Average Ticket Size', val: '$48.20', rate: '+3.1%', dir: 'up', icon: ShoppingBag, color: 'text-amber-400', bg: 'bg-amber-500/10' }
+    { label: 'Average Ticket Size', val: formatPrice(48.20), rate: '+3.1%', dir: 'up', icon: ShoppingBag, color: 'text-amber-400', bg: 'bg-amber-500/10' }
   ];
 
   return (

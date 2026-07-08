@@ -10,7 +10,7 @@ import {
   Check
 } from 'lucide-react';
 import { getSwal, showToast } from '../utils/alerts';
-import { getBackendUrl, setBackendUrl } from '../utils/config';
+import { getBackendUrl, setBackendUrl, getCurrencySymbol, setCurrencySymbol } from '../utils/config';
 
 export default function SettingsView() {
   const [storeName, setStoreName] = useState('FreshCart PK');
@@ -19,6 +19,9 @@ export default function SettingsView() {
   const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState('1500');
   const [codEnabled, setCodEnabled] = useState(true);
   const [stripeEnabled, setStripeEnabled] = useState(false);
+
+  // Currency config
+  const [currency, setCurrency] = useState(() => getCurrencySymbol());
 
   // Backend URL config
   const [backendUrl, setBackendUrlState] = useState(() => getBackendUrl());
@@ -29,11 +32,14 @@ export default function SettingsView() {
     setIsTesting(true);
     setTestStatus('idle');
     try {
-      const res = await fetch(`${backendUrl.replace(/\/+$/, '')}/api/health`, { signal: AbortSignal.timeout(5000) });
+      const res = await fetch(`${backendUrl.replace(/\/+$/, '')}/api/v1/products?limit=1`);
       if (res.ok) {
         setBackendUrl(backendUrl);
         setTestStatus('success');
         showToast('success', 'Backend URL connected and saved!');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         setTestStatus('error');
         showToast('error', `Backend returned status ${res.status}`);
@@ -44,6 +50,25 @@ export default function SettingsView() {
     } finally {
       setIsTesting(false);
     }
+  };
+
+  const handleResetBackendUrl = () => {
+    localStorage.removeItem('api_backend_url');
+    setBackendUrlState('https://grocery-backend-2prq.onrender.com');
+    setTestStatus('idle');
+    showToast('success', 'Reset to default backend URL successfully!');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  };
+
+  const handleCurrencyChange = (newSymbol: string) => {
+    setCurrencySymbol(newSymbol);
+    setCurrency(newSymbol);
+    showToast('success', `Currency preference updated to ${newSymbol}!`);
+    setTimeout(() => {
+      window.location.reload();
+    }, 800);
   };
 
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -121,6 +146,13 @@ export default function SettingsView() {
               )}
               {isTesting ? 'Testing...' : testStatus === 'success' ? 'Connected!' : 'Test & Save'}
             </button>
+            <button
+              type="button"
+              onClick={handleResetBackendUrl}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap bg-bg-input text-text-secondary border border-border-card hover:text-text-primary hover:bg-panel"
+            >
+              Reset to Default
+            </button>
           </div>
           <div className={`text-xs rounded-lg px-3 py-2 ${
             testStatus === 'success' 
@@ -144,7 +176,7 @@ export default function SettingsView() {
             <Store className="h-4.5 w-4.5 text-emerald-400" />
             Store Information
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-text-secondary uppercase mb-1.5">Store Display Name</label>
               <input
@@ -162,6 +194,17 @@ export default function SettingsView() {
                 onChange={(e) => setStoreEmail(e.target.value)}
                 className="w-full rounded-xl bg-bg-input border border-border-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-emerald-500 transition-colors"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-text-secondary uppercase mb-1.5">System Currency</label>
+              <select
+                value={currency}
+                onChange={(e) => handleCurrencyChange(e.target.value)}
+                className="w-full rounded-xl bg-bg-input border border-border-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+              >
+                <option value="PKR">Pakistani Rupee (Rs. / PKR)</option>
+                <option value="USD">US Dollar ($ / USD)</option>
+              </select>
             </div>
           </div>
         </div>

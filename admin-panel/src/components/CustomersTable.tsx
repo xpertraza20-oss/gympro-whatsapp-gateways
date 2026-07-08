@@ -7,6 +7,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { getSwal, showToast } from '../utils/alerts';
+import { formatPrice } from '../utils/config';
 
 interface CustomerItem {
   id: string;
@@ -151,7 +152,7 @@ export default function CustomersTable() {
                       {customer.ordersPlaced} orders
                     </td>
                     <td className="px-6 py-4 font-semibold text-text-primary">
-                      ${customer.totalSpent.toFixed(2)}
+                      {formatPrice(customer.totalSpent)}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold border ${

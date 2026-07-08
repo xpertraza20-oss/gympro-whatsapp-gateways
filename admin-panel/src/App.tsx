@@ -10,7 +10,7 @@ import AnalyticsView from './components/AnalyticsView';
 import SettingsView from './components/SettingsView';
 import { saveProducts, type Product } from './utils/mockApi';
 import { getSwal, showToast } from './utils/alerts';
-import { getBackendUrl } from './utils/config';
+import { getBackendUrl, formatPrice } from './utils/config';
 import { 
   ShoppingBag, 
   TrendingUp, 
@@ -194,7 +194,7 @@ export default function App() {
                   {[
                     { 
                       label: 'Inventory Valuation', 
-                      val: `$${products.reduce((acc, p) => acc + (p.price * p.stock), 0).toFixed(2)}`, 
+                      val: formatPrice(products.reduce((acc, p) => acc + (p.price * p.stock), 0)), 
                       change: 'Total stock value', 
                       icon: DollarSign, 
                       color: 'text-emerald-400', 
@@ -210,7 +210,7 @@ export default function App() {
                     },
                     { 
                       label: 'Avg Product Price', 
-                      val: `$${(products.length > 0 ? (products.reduce((acc, p) => acc + p.price, 0) / products.length) : 0).toFixed(2)}`, 
+                      val: formatPrice(products.length > 0 ? (products.reduce((acc, p) => acc + p.price, 0) / products.length) : 0), 
                       change: 'Across all items', 
                       icon: Activity, 
                       color: 'text-purple-400', 

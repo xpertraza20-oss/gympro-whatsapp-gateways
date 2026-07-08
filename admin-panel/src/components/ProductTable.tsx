@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { type Product, CATEGORIES } from '../utils/mockApi';
+import { formatPrice } from '../utils/config';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -233,7 +234,7 @@ export default function ProductTable({
 
                       {/* Price */}
                       <td className="px-6 py-4 font-semibold text-text-primary">
-                        ${product.price.toFixed(2)}
+                        {formatPrice(product.price)}
                       </td>
 
                       {/* Unit */}
