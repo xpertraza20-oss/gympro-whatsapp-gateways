@@ -103,5 +103,84 @@ const getOrderById = async (req, res, next) => {
 module.exports = {
   placeOrder,
   getOrderHistory,
-  getOrderById
+  getOrderById,
+  
+  // Admin endpoints
+  adminGetAllOrders: async (req, res, next) => {
+    try {
+      const query = `
+        SELECT 
+          o.id,
+          o.delivery_address,
+          o.total_amount,
+          o.payment_method,
+          o.status,
+          o.items,
+          o.created_at,
+          u.name AS customer_name,
+          u.email AS customer_email
+        FROM orders o
+        LEFT JOIN users u ON o.user_id = u.id
+        ORDER BY o.created_at DESC;
+      `;
+      const result = await pool.query(query);
+
+      return res.status(200).json({
+        success: true,
+        data: result.rows.map(row => ({
+          id: row.id,
+          customerName: row.customer_name || 'Anonymous',
+          email: row.customer_email || 'N/A',
+          itemsCount: Array.isArray(row.items) ? row.items.length : 0,
+          totalAmount: parseFloat(row.total_amount),
+          status: row.status,
+          date: new Date(row.created_at).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+          }),
+          paymentMethod: row.payment_method
+        }))
+      });
+    } catch (err) {
+      console.error('Error in adminGetAllOrders:', err);
+      next(err);
+    }
+  },
+
+  adminUpdateOrderStatus: async (req, res, next) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status is a required field.'
+      });
+    }
+
+    try {
+      const query = `
+        UPDATE orders
+        SET status = $1
+        WHERE id = $2
+        RETURNING *;
+      `;
+      const result = await pool.query(query, [status, parseInt(id, 10)]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order not found.'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Order status updated successfully.',
+        data: result.rows[0]
+      });
+    } catch (err) {
+      console.error('Error in adminUpdateOrderStatus:', err);
+      next(err);
+    }
+  }
 };

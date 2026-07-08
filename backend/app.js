@@ -9,6 +9,7 @@ const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const userRoutes  = require('./routes/userRoutes');
+const adminOrderRoutes = require('./routes/adminOrderRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
@@ -56,6 +57,7 @@ app.use('/api/v1/admin/products', productRoutes.adminRouter);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/admin/users', userRoutes);
+app.use('/api/v1/admin/orders', adminOrderRoutes);
 
 // 5. Catch 404 and forward to error handler
 app.use((req, res, next) => {
