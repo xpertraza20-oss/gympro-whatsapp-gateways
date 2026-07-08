@@ -5,7 +5,7 @@ import ProductTable from './components/ProductTable';
 import AddProductModal from './components/AddProductModal';
 import CategoryTable from './components/CategoryTable';
 import OrdersTable from './components/OrdersTable';
-import CustomersTable from './components/CustomersTable';
+import CustomerTable from './components/CustomerTable';
 import AnalyticsView from './components/AnalyticsView';
 import SettingsView from './components/SettingsView';
 import { saveProducts, type Product } from './utils/mockApi';
@@ -345,7 +345,7 @@ export default function App() {
             ) : currentTab === 'orders' ? (
               <OrdersTable />
             ) : currentTab === 'customers' ? (
-              <CustomersTable />
+              <CustomerTable />
             ) : currentTab === 'analytics' ? (
               <AnalyticsView />
             ) : currentTab === 'settings' ? (
