@@ -42,29 +42,94 @@ const initializeDatabase = async () => {
     await client.query(createProductsTable);
     console.log('Products table checked/created.');
 
-    // 2.1. Create users table
+    // 2.1. Create users table (email-first design)
     const createUsersTable = `
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        phone_number VARCHAR(50) UNIQUE NOT NULL,
         name VARCHAR(255),
-        email VARCHAR(255),
+        email VARCHAR(255) UNIQUE,
+        phone VARCHAR(50),
+        is_verified BOOLEAN DEFAULT false,
+        phone_number VARCHAR(50),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;
     await client.query(createUsersTable);
     console.log('Users table checked/created.');
 
-    // 2.2. Create otps table
-    const createOtpsTable = `
-      CREATE TABLE IF NOT EXISTS otps (
-        phone_number VARCHAR(50) PRIMARY KEY,
-        otp VARCHAR(6) NOT NULL,
-        expires_at TIMESTAMP WITH TIME ZONE NOT NULL
-      );
+    // 2.1.1 Add email columns if this is an upgrade from phone-only schema
+    const alterUsersAddEmail = `
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='email') THEN
+          ALTER TABLE users ADD COLUMN email VARCHAR(255) UNIQUE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='phone') THEN
+          ALTER TABLE users ADD COLUMN phone VARCHAR(50);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_verified') THEN
+          ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT false;
+        END IF;
+      END
+      $$;
     `;
-    await client.query(createOtpsTable);
-    console.log('OTPs table checked/created.');
+    await client.query(alterUsersAddEmail);
+    console.log('Users table schema migration completed.');
+
+    // 2.1.2 Ensure the UNIQUE index on users.email exists
+    // (ALTER TABLE ADD COLUMN doesn't add a constraint automatically on existing tables)
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    `);
+    console.log('Users email unique index checked/created.');
+
+    // 2.1.3 Drop NOT NULL constraint on phone_number (email is now the primary identity)
+    // This is safe to run multiple times — ALTER COLUMN is idempotent for nullability.
+    await client.query(`
+      ALTER TABLE users ALTER COLUMN phone_number DROP NOT NULL;
+    `);
+    console.log('Users phone_number NOT NULL constraint removed.');
+
+    // 2.2. OTPs table — safe migration
+    // If the old schema exists (phone_number as PRIMARY KEY), drop and recreate with new design.
+    // OTPs are short-lived so data loss is acceptable; any pending OTPs expire in 5 min anyway.
+    await client.query(`
+      DO $$
+      BEGIN
+        -- Detect legacy schema: phone_number is the primary key column
+        IF EXISTS (
+          SELECT 1
+          FROM information_schema.table_constraints tc
+          JOIN information_schema.key_column_usage kcu
+            ON tc.constraint_name = kcu.constraint_name
+            AND tc.table_schema = kcu.table_schema
+          WHERE tc.table_name   = 'otps'
+            AND tc.constraint_type = 'PRIMARY KEY'
+            AND kcu.column_name    = 'phone_number'
+        ) THEN
+          DROP TABLE otps;
+        END IF;
+      END
+      $$;
+    `);
+
+    // Now create with the new schema (safe — no-op if already recreated)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS otps (
+        id           SERIAL PRIMARY KEY,
+        email        VARCHAR(255),
+        phone_number VARCHAR(50),
+        otp          VARCHAR(6)  NOT NULL,
+        expires_at   TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('OTPs table checked/migrated.');
+
+    // 2.2.1 Indexes for fast lookups
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_otps_email  ON otps(email);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_otps_phone  ON otps(phone_number);`);
+    console.log('OTPs table indexes checked/created.');
 
     // 2.3. Create orders table
     const createOrdersTable = `
