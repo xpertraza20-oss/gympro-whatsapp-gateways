@@ -24,11 +24,11 @@ class _LoginScreenState extends State<LoginScreen>
     super.initState();
     _animCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 1000),
     );
     _fadeAnim  = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
-    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
+    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutBack));
     _animCtrl.forward();
   }
 
@@ -41,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
     context.read<PhoneAuthBloc>().add(LoginEvent(email: _emailCtrl.text.trim()));
   }
 
@@ -65,185 +66,315 @@ class _LoginScreenState extends State<LoginScreen>
           );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-            content: Text(state.message),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    state.message,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
             backgroundColor: const Color(0xFFEF4444),
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ));
         }
       },
       builder: (ctx, state) {
         final isLoading = state is AuthLoading;
         return Scaffold(
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+          body: Stack(
+            children: [
+              // Premium Background Gradient & Geometric Shapes
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF06101E),
+                      Color(0xFF0B1E36),
+                      Color(0xFF020914)
+                    ],
+                  ),
+                ),
               ),
-            ),
-            child: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-                child: FadeTransition(
-                  opacity: _fadeAnim,
-                  child: SlideTransition(
-                    position: _slideAnim,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 40),
-
-                        // Logo / Icon
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF10B981), Color(0xFF059669)],
-                            ),
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF10B981).withAlpha(77),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(Icons.shopping_bag_rounded,
-                              color: Colors.white, size: 34),
-                        ),
-                        const SizedBox(height: 32),
-
-                        const Text(
-                          'Welcome back 👋',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Enter your email to receive a login code.',
-                          style: TextStyle(
-                            color: Colors.white.withAlpha(153),
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 48),
-
-                        // Form Card
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(15),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: Colors.white.withAlpha(26),
-                            ),
-                          ),
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              children: [
-                                _GlassInput(
-                                  controller: _emailCtrl,
-                                  label: 'Email Address',
-                                  hint: 'you@example.com',
-                                  icon: Icons.email_rounded,
-                                  keyboardType: TextInputType.emailAddress,
-                                  validator: (v) {
-                                    if (v == null || v.isEmpty) return 'Enter your email';
-                                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
-                                      return 'Enter a valid email address';
-                                    }
-                                    return null;
-                                  },
+              // Decorative Glowing Circles
+              Positioned(
+                top: -100,
+                right: -50,
+                child: Container(
+                  width: 250,
+                  height: 250,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF10B981).withAlpha(30),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -80,
+                left: -60,
+                child: Container(
+                  width: 280,
+                  height: 280,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF0D9488).withAlpha(20),
+                  ),
+                ),
+              ),
+              SafeArea(
+                child: Center(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: FadeTransition(
+                      opacity: _fadeAnim,
+                      child: SlideTransition(
+                        position: _slideAnim,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Glassmorphism Logo Icon Container
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withAlpha(12),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withAlpha(26),
+                                  width: 1.5,
                                 ),
-                                const SizedBox(height: 24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF10B981).withAlpha(51),
+                                    blurRadius: 30,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.shopping_basket_rounded,
+                                color: Color(0xFF10B981),
+                                size: 54,
+                              ),
+                            ),
+                            const SizedBox(height: 28),
 
-                                // Submit Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 54,
-                                  child: ElevatedButton(
-                                    onPressed: isLoading ? null : _submit,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF10B981),
-                                      foregroundColor: Colors.white,
-                                      disabledBackgroundColor:
-                                          const Color(0xFF10B981).withAlpha(128),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
+                            // Heading
+                            const Text(
+                              'FreshCart App',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Premium Organic Grocery & Delivery Service',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withAlpha(160),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+
+                            // Form Box with Glassmorphism
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withAlpha(12),
+                                borderRadius: BorderRadius.circular(28),
+                                border: Border.all(
+                                  color: Colors.white.withAlpha(20),
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha(77),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: Form(
+                                key: _formKey,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Login to Account',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    child: isLoading
-                                        ? const SizedBox(
-                                            width: 22,
-                                            height: 22,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2.5,
+                                    const SizedBox(height: 20),
+
+                                    // Email Input field
+                                    _PremiumInputField(
+                                      controller: _emailCtrl,
+                                      labelText: 'Email Address',
+                                      hintText: 'name@example.com',
+                                      icon: Icons.mail_outline_rounded,
+                                      keyboardType: TextInputType.emailAddress,
+                                      validator: (v) {
+                                        if (v == null || v.trim().isEmpty) {
+                                          return 'Please enter your email';
+                                        }
+                                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim())) {
+                                          return 'Enter a valid email address';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 28),
+
+                                    // Elevate / Submit Button
+                                    SizedBox(
+                                      width: double.infinity,
+                                      height: 56,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                          ),
+                                          borderRadius: BorderRadius.circular(16),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0xFF10B981).withAlpha(77),
+                                              blurRadius: 16,
+                                              offset: const Offset(0, 4),
                                             ),
-                                          )
-                                        : const Text(
-                                            'Send Login Code',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w700,
+                                          ],
+                                        ),
+                                        child: ElevatedButton(
+                                          onPressed: isLoading ? null : _submit,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.transparent,
+                                            shadowColor: Colors.transparent,
+                                            foregroundColor: Colors.white,
+                                            disabledBackgroundColor: Colors.transparent,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(16),
                                             ),
                                           ),
+                                          child: isLoading
+                                              ? const SizedBox(
+                                                  width: 24,
+                                                  height: 24,
+                                                  child: CircularProgressIndicator(
+                                                    color: Colors.white,
+                                                    strokeWidth: 2.5,
+                                                  ),
+                                                )
+                                              : const Text(
+                                                  'Send Verification Code',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w700,
+                                                    letterSpacing: 0.2,
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Quick Demo Auto-fill Helper
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _emailCtrl.text = 'alimughalsab20100@gmail.com';
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withAlpha(15),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFF10B981).withAlpha(30),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.flash_on_rounded, color: Color(0xFF10B981), size: 16),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Quick Fill: alimughalsab20100@gmail.com',
+                                      style: TextStyle(
+                                        color: const Color(0xFF10B981).withAlpha(220),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 36),
+
+                            // Footer Signup Navigation
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "New to FreshCart? ",
+                                  style: TextStyle(
+                                    color: Colors.white.withAlpha(140),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).pushReplacement(
+                                      PageRouteBuilder(
+                                        pageBuilder: (_, anim, __) => const SignupScreen(),
+                                        transitionsBuilder: (_, anim, __, child) =>
+                                            FadeTransition(opacity: anim, child: child),
+                                        transitionDuration: const Duration(milliseconds: 300),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    'Register here',
+                                    style: TextStyle(
+                                      color: Color(0xFF10B981),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: Color(0xFF10B981),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 32),
-
-                        // Signup Link
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account? ",
-                              style: TextStyle(
-                                color: Colors.white.withAlpha(153),
-                                fontSize: 14,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () => Navigator.of(context).pushReplacement(
-                                PageRouteBuilder(
-                                  pageBuilder: (_, anim, __) => const SignupScreen(),
-                                  transitionsBuilder: (_, anim, __, child) =>
-                                      FadeTransition(opacity: anim, child: child),
-                                  transitionDuration:
-                                      const Duration(milliseconds: 300),
-                                ),
-                              ),
-                              child: const Text(
-                                'Sign up',
-                                style: TextStyle(
-                                  color: Color(0xFF10B981),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
+                            const SizedBox(height: 20),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
         );
       },
@@ -251,25 +382,23 @@ class _LoginScreenState extends State<LoginScreen>
   }
 }
 
-// ─── Shared glass-morphism input widget ──────────────────────────────────────
+// ─── Premium custom text input styling ───────────────────────────────────────
 
-class _GlassInput extends StatelessWidget {
+class _PremiumInputField extends StatelessWidget {
   final TextEditingController controller;
-  final String label;
-  final String hint;
+  final String labelText;
+  final String hintText;
   final IconData icon;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
-  final bool obscureText;
 
-  const _GlassInput({
+  const _PremiumInputField({
     required this.controller,
-    required this.label,
-    required this.hint,
+    required this.labelText,
+    required this.hintText,
     required this.icon,
     this.keyboardType = TextInputType.text,
     this.validator,
-    this.obscureText = false,
   });
 
   @override
@@ -277,36 +406,64 @@ class _GlassInput extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      obscureText: obscureText,
       validator: validator,
-      style: const TextStyle(color: Colors.white, fontSize: 15),
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      ),
+      cursorColor: const Color(0xFF10B981),
       decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        labelStyle: TextStyle(color: Colors.white.withAlpha(153), fontSize: 13),
-        hintStyle: TextStyle(color: Colors.white.withAlpha(77), fontSize: 14),
-        prefixIcon: Icon(icon, color: const Color(0xFF10B981), size: 20),
+        labelText: labelText,
+        hintText: hintText,
+        labelStyle: TextStyle(
+          color: Colors.white.withAlpha(140),
+          fontSize: 14,
+        ),
+        hintStyle: TextStyle(
+          color: Colors.white.withAlpha(60),
+          fontSize: 14,
+        ),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Icon(icon, color: const Color(0xFF10B981), size: 22),
+        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 40),
         filled: true,
-        fillColor: Colors.white.withAlpha(13),
+        fillColor: Colors.white.withAlpha(8),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withAlpha(38)),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: Colors.white.withAlpha(20),
+            width: 1,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: Color(0xFF10B981),
+            width: 2,
+          ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFEF4444)),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: Color(0xFFEF4444),
+            width: 1,
+          ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: Color(0xFFEF4444),
+            width: 2,
+          ),
         ),
-        errorStyle: const TextStyle(color: Color(0xFFEF4444)),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        errorStyle: const TextStyle(
+          color: Color(0xFFEF4444),
+          fontWeight: FontWeight.w500,
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       ),
     );
   }

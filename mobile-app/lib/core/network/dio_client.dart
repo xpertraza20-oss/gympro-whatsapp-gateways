@@ -8,8 +8,8 @@ class DioClient {
       : dio = Dio(
           BaseOptions(
             baseUrl: baseUrl ?? const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:5000'),
-            connectTimeout: const Duration(seconds: 15),
-            receiveTimeout: const Duration(seconds: 15),
+            connectTimeout: const Duration(seconds: 60),
+            receiveTimeout: const Duration(seconds: 60),
             responseType: ResponseType.json,
           ),
         ) {
