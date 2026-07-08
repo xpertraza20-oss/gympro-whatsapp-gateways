@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/order_bloc.dart';
 import '../bloc/order_event.dart';
@@ -148,7 +148,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '\$${totalAmount.toStringAsFixed(2)}',
+                                'Rs. ${totalAmount.toStringAsFixed(2)}',
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF10B981)),
                               ),
                               ElevatedButton(

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../bloc/cart_bloc.dart';
@@ -159,7 +159,7 @@ class CartBottomSheet extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    '\$${product.price.toStringAsFixed(2)}',
+                                    'Rs. ${product.price.toStringAsFixed(2)}',
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
@@ -231,7 +231,7 @@ class CartBottomSheet extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '\$${state.subtotal.toStringAsFixed(2)}',
+                              'Rs. ${state.subtotal.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,

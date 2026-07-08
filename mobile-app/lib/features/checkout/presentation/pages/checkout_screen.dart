@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../cart/presentation/bloc/cart_bloc.dart';
 import '../../../cart/presentation/bloc/cart_event.dart';
@@ -193,7 +193,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('Items (${cartState.totalItemCount})', style: const TextStyle(color: Colors.grey)),
-                                Text('\$${cartState.subtotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                Text('Rs. ${cartState.subtotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600)),
                               ],
                             ),
                             const SizedBox(height: 8),
@@ -210,7 +210,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               children: [
                                 const Text('Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 Text(
-                                  '\$${cartState.subtotal.toStringAsFixed(2)}',
+                                  'Rs. ${cartState.subtotal.toStringAsFixed(2)}',
                                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
                                 ),
                               ],

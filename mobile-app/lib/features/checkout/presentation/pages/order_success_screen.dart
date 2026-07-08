@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'order_tracking_screen.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
@@ -101,7 +101,7 @@ class OrderSuccessScreen extends StatelessWidget {
                       children: [
                         const Text('Total Bill Paid', style: TextStyle(color: Colors.grey, fontSize: 14)),
                         Text(
-                          '\$${totalAmount.toStringAsFixed(2)}',
+                          'Rs. ${totalAmount.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF10B981),

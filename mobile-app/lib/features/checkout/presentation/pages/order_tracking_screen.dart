@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/order_bloc.dart';
@@ -144,7 +144,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                           children: [
                             const Text('Amount to Pay', style: TextStyle(color: Colors.grey, fontSize: 14)),
                             Text(
-                              '\$${totalAmount.toStringAsFixed(2)}',
+                              'Rs. ${totalAmount.toStringAsFixed(2)}',
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF10B981)),
                             ),
                           ],

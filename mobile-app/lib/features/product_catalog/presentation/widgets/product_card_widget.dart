@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../domain/entities/product.dart';
@@ -156,7 +156,7 @@ class ProductCardWidget extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '\$${product.price.toStringAsFixed(2)}',
+                        'Rs. ${product.price.toStringAsFixed(2)}',
                         style: const TextStyle(
                           color: Color(0xFF10B981),
                           fontWeight: FontWeight.bold,
