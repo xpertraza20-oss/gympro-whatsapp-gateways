@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --color-body: var(--bg-body);
+  --color-panel: var(--bg-panel);
+  --color-border-card: var(--border-card);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-bg-input: var(--bg-input);
+  --color-border-input: var(--border-input);
+  --color-hover-panel: var(--hover-panel);
+}
+
+:root {
+  --bg-body: #020617;
+  --bg-panel: #0f172a;
+  --border-card: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --bg-input: #020617;
+  --border-input: #1e293b;
+  --hover-panel: #1e293b;
+}
+
+.light {
+  --bg-body: #f8fafc;
+  --bg-panel: #ffffff;
+  --border-card: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --bg-input: #ffffff;
+  --border-input: #cbd5e1;
+  --hover-panel: #f1f5f9;
+}
+
+/* Smooth scrolling and transitions */
+html, body {
+  scroll-behavior: smooth;
+  font-family: var(--font-sans);
+}
+
+/* Custom scrollbar aesthetics for dark theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a; /* Slate 900 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155; /* Slate 700 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569; /* Slate 600 */
+}

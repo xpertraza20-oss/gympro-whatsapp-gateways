@@ -1,0 +1,33 @@
+import 'package:dio/dio';
+import 'auth_interceptor.dart';
+
+class DioClient {
+  final Dio dio;
+
+  DioClient({String? baseUrl})
+      : dio = Dio(
+          BaseOptions(
+            baseUrl: baseUrl ?? const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:5000'),
+            connectTimeout: const Duration(seconds: 15),
+            receiveTimeout: const Duration(seconds: 15),
+            responseType: ResponseType.json,
+          ),
+        ) {
+    // Add interceptors
+    dio.interceptors.addAll([
+      AuthInterceptor(),
+      LogInterceptor(
+        requestHeader: true,
+        requestBody: true,
+        responseHeader: false,
+        responseBody: true,
+        error: true,
+      ),
+    ]);
+  }
+
+  /// Dynamically updates the base URL at runtime
+  void setBaseUrl(String newUrl) {
+    dio.options.baseUrl = newUrl;
+  }
+}
