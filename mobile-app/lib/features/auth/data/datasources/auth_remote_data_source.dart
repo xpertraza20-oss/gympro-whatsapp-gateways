@@ -1,52 +1,69 @@
 import 'package:dio/dio.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<void> requestOtp(String phoneNumber);
-  Future<String> verifyOtp(String phoneNumber, String otp);
+  Future<void> signup({required String name, required String email, required String phone});
+  Future<void> login({required String email});
+  Future<Map<String, dynamic>> verifyOtp({required String email, required String otp});
+  Future<void> requestOtp(String phoneNumber); // legacy
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final Dio dio;
-
   AuthRemoteDataSourceImpl({required this.dio});
 
   @override
-  Future<void> requestOtp(String phoneNumber) async {
+  Future<void> signup({required String name, required String email, required String phone}) async {
     try {
-      final response = await dio.post(
-        '/api/v1/auth/request-otp',
-        data: {'phoneNumber': phoneNumber},
-      );
-      if (response.statusCode != 200 && response.data?['success'] != true) {
-        throw Exception(response.data?['message'] ?? 'Failed to request OTP');
+      final response = await dio.post('/api/v1/auth/signup', data: {
+        'name': name,
+        'email': email,
+        'phone': phone,
+      });
+      if (response.data?['success'] != true) {
+        throw Exception(response.data?['message'] ?? 'Signup failed');
       }
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Network error occurred';
-      throw Exception(msg);
-    } catch (e) {
-      throw Exception(e.toString());
+      throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
     }
   }
 
   @override
-  Future<String> verifyOtp(String phoneNumber, String otp) async {
+  Future<void> login({required String email}) async {
     try {
-      final response = await dio.post(
-        '/api/v1/auth/verify-otp',
-        data: {'phoneNumber': phoneNumber, 'otp': otp},
-      );
-      if (response.statusCode == 200 && response.data?['success'] == true) {
-        final token = response.data['token'];
-        if (token != null) {
-          return token;
-        }
+      final response = await dio.post('/api/v1/auth/login', data: {'email': email});
+      if (response.data?['success'] != true) {
+        throw Exception(response.data?['message'] ?? 'Login failed');
       }
-      throw Exception(response.data?['message'] ?? 'Invalid OTP verification');
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? e.message ?? 'Network error occurred';
-      throw Exception(msg);
-    } catch (e) {
-      throw Exception(e.toString());
+      throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> verifyOtp({required String email, required String otp}) async {
+    try {
+      final response = await dio.post('/api/v1/auth/verify-otp', data: {
+        'email': email,
+        'otp': otp,
+      });
+      if (response.data?['success'] == true) {
+        return {
+          'token': response.data['token'],
+          'user': response.data['user'],
+        };
+      }
+      throw Exception(response.data?['message'] ?? 'OTP verification failed');
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
+    }
+  }
+
+  @override
+  Future<void> requestOtp(String phoneNumber) async {
+    try {
+      await dio.post('/api/v1/auth/request-otp', data: {'phoneNumber': phoneNumber});
+    } on DioException catch (e) {
+      throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
     }
   }
 }

@@ -7,7 +7,7 @@ import '../bloc/product_bloc.dart';
 import '../bloc/product_event.dart';
 import '../bloc/product_state.dart';
 import '../../../auth/presentation/bloc/phone_auth_bloc.dart';
-import '../../../auth/presentation/pages/phone_input_screen.dart';
+import '../../../auth/presentation/pages/login_screen.dart';
 import '../widgets/product_card_widget.dart';
 import 'package:grocery_app/features/product_catalog/domain/entities/category.dart';
 import 'package:grocery_app/features/product_catalog/domain/usecases/get_categories_usecase.dart';
@@ -185,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (state is AuthInitial) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const PhoneInputScreen()),
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
               (route) => false,
             );
           }

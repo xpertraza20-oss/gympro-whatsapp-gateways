@@ -8,7 +8,8 @@ import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/bloc/phone_auth_bloc.dart';
-import 'features/auth/presentation/pages/phone_input_screen.dart';
+import 'features/auth/presentation/pages/login_screen.dart';
+import 'features/auth/presentation/pages/signup_screen.dart';
 import 'features/product_catalog/data/datasources/product_remote_data_source.dart';
 import 'features/product_catalog/data/repositories/product_repository_impl.dart';
 import 'features/product_catalog/domain/usecases/get_products_usecase.dart';
@@ -123,7 +124,11 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             fontFamily: 'Roboto',
           ),
-          home: isAuthenticated ? const HomeScreen() : const PhoneInputScreen(),
+          home: isAuthenticated ? const HomeScreen() : const LoginScreen(),
+          routes: {
+            '/home': (context) => const HomeScreen(),
+            '/login': (context) => const LoginScreen(),
+          },
         ),
       ),
     );
@@ -132,13 +137,34 @@ class MyApp extends StatelessWidget {
 
 class _MockAuthRepository implements AuthRepository {
   @override
-  Future<void> requestOtp(String phoneNumber) async {}
+  Future<void> signup({required String name, required String email, required String phone}) async {}
+
   @override
-  Future<String> verifyOtp(String phoneNumber, String otp) async => 'mock_token';
+  Future<void> login({required String email}) async {}
+
+  @override
+  Future<Map<String, dynamic>> verifyOtp({required String email, required String otp}) async {
+    return {
+      'token': 'mock_token',
+      'user': {
+        'id': 1,
+        'name': 'Mock User',
+        'email': email,
+        'phone': '1234567890',
+        'is_verified': true,
+      }
+    };
+  }
+
+  @override
+  Future<void> requestOtp(String phoneNumber) async {}
+
   @override
   Future<void> saveToken(String token) async {}
+
   @override
   Future<String?> getToken() async => null;
+
   @override
   Future<void> clearToken() async {}
 }
