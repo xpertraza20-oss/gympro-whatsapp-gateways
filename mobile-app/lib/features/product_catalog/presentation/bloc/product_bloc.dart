@@ -17,11 +17,16 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   ) async {
     final currentState = state;
 
-    // 1. Refresh logic
-    if (event.isRefresh) {
+    // 1. Refresh or Filter Change logic (reload from page 1)
+    if (event.isRefresh || currentState is ProductInitial || currentState is ProductError) {
       emit(ProductLoading());
       try {
-        final products = await getProductsUseCase(page: 1, limit: _limit);
+        final products = await getProductsUseCase(
+          page: 1,
+          limit: _limit,
+          search: event.search,
+          categoryId: event.categoryId,
+        );
         emit(ProductLoaded(
           products: products,
           currentPage: 1,
@@ -34,24 +39,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       return;
     }
 
-    // 2. Initial page load logic (from Initial or Error states)
-    if (currentState is ProductInitial || currentState is ProductError) {
-      emit(ProductLoading());
-      try {
-        final products = await getProductsUseCase(page: 1, limit: _limit);
-        emit(ProductLoaded(
-          products: products,
-          currentPage: 1,
-          hasReachedMax: products.length < _limit,
-          isPaginationLoading: false,
-        ));
-      } catch (err) {
-        emit(ProductError(err.toString()));
-      }
-      return;
-    }
-
-    // 3. Paginated scroll loading logic (from Loaded state)
+    // 2. Paginated scroll loading logic (from Loaded state)
     if (currentState is ProductLoaded) {
       // Guard clauses to prevent duplicate network calls
       if (currentState.hasReachedMax || currentState.isPaginationLoading) return;
@@ -61,7 +49,12 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
       try {
         final nextPage = currentState.currentPage + 1;
-        final newProducts = await getProductsUseCase(page: nextPage, limit: _limit);
+        final newProducts = await getProductsUseCase(
+          page: nextPage,
+          limit: _limit,
+          search: event.search,
+          categoryId: event.categoryId,
+        );
 
         if (newProducts.isEmpty) {
           emit(currentState.copyWith(

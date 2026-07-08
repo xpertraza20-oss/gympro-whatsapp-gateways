@@ -1,11 +1,16 @@
 import 'package:dio/dio.dart';
 import '../models/product_model.dart';
+import '../models/category_model.dart';
 
 abstract class ProductRemoteDataSource {
   Future<List<ProductModel>> fetchProducts({
     required int page,
     required int limit,
+    String? search,
+    int? categoryId,
   });
+
+  Future<List<CategoryModel>> fetchCategories();
 }
 
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
@@ -17,15 +22,19 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   Future<List<ProductModel>> fetchProducts({
     required int page,
     required int limit,
+    String? search,
+    int? categoryId,
   }) async {
     try {
       // Simulate real GET request to backend products endpoint
-      // GET /api/v1/products?page=1&limit=10
+      // GET /api/v1/products?page=1&limit=10&search=keyword&category_id=X
       final response = await dio.get(
         '/api/v1/products',
         queryParameters: {
           'page': page,
           'limit': limit,
+          if (search != null && search.isNotEmpty) 'search': search,
+          if (categoryId != null) 'category_id': categoryId,
         },
       );
 
@@ -156,5 +165,24 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         'title': '${json['title']} (Page $page)',
       });
     }).toList();
+  }
+
+  @override
+  Future<List<CategoryModel>> fetchCategories() async {
+    try {
+      final response = await dio.get('/api/v1/categories');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'] ?? response.data;
+        return data.map((json) => CategoryModel.fromJson(json as Map<String, dynamic>)).toList();
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+        );
+      }
+    } catch (e) {
+      print("[RemoteDataSource] Categories fetch failed, returning empty");
+      return [];
+    }
   }
 }

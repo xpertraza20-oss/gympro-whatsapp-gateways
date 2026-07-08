@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../domain/entities/product.dart';
 
 class ProductCardWidget extends StatelessWidget {
@@ -44,17 +45,11 @@ class ProductCardWidget extends StatelessWidget {
                     memCacheWidth: 350, // Resizes asset in memory (Saves RAM, improves scroll speeds)
                     memCacheHeight: 350,
                     maxWidthDiskCache: 600, // Caps disk footprint
-                    placeholder: (context, url) => Container(
-                      color: Colors.grey[100],
-                      child: const Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
-                          ),
-                        ),
+                    placeholder: (context, url) => Shimmer.fromColors(
+                      baseColor: Colors.grey.shade200,
+                      highlightColor: Colors.grey.shade100,
+                      child: Container(
+                        color: Colors.white,
                       ),
                     ),
                     errorWidget: (context, url, error) => Container(

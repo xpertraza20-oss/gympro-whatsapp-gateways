@@ -10,6 +10,9 @@ import 'features/auth/presentation/pages/phone_input_screen.dart';
 import 'features/product_catalog/data/datasources/product_remote_data_source.dart';
 import 'features/product_catalog/data/repositories/product_repository_impl.dart';
 import 'features/product_catalog/domain/usecases/get_products_usecase.dart';
+import 'features/product_catalog/domain/repositories/product_repository.dart';
+import 'features/product_catalog/domain/entities/category.dart';
+import 'features/product_catalog/domain/entities/product.dart';
 import 'features/product_catalog/presentation/bloc/product_bloc.dart';
 import 'features/product_catalog/presentation/bloc/product_event.dart';
 import 'features/product_catalog/presentation/pages/home_screen.dart';
@@ -43,6 +46,7 @@ void main() async {
   runApp(
     MyApp(
       getProductsUseCase: getProductsUseCase,
+      productRepository: productRepository,
       authRepository: authRepository,
       isAuthenticated: isAuthenticated,
     ),
@@ -51,12 +55,14 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final GetProductsUseCase getProductsUseCase;
+  final ProductRepository? productRepository;
   final AuthRepository? authRepository;
   final bool isAuthenticated;
 
   const MyApp({
     super.key,
     required this.getProductsUseCase,
+    this.productRepository,
     this.authRepository,
     this.isAuthenticated = false,
   });
@@ -64,27 +70,31 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeAuthRepo = authRepository ?? _MockAuthRepository();
+    final activeProductRepo = productRepository ?? _MockProductRepository();
 
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<PhoneAuthBloc>(
-          create: (context) => PhoneAuthBloc(authRepository: activeAuthRepo),
+    return RepositoryProvider<ProductRepository>.value(
+      value: activeProductRepo,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<PhoneAuthBloc>(
+            create: (context) => PhoneAuthBloc(authRepository: activeAuthRepo),
+          ),
+          BlocProvider<ProductBloc>(
+            create: (context) => ProductBloc(
+              getProductsUseCase: getProductsUseCase,
+            )..add(const FetchProductsEvent()), // Pre-load products on startup
+          ),
+        ],
+        child: MaterialApp(
+          title: 'FreshCart Mobile App',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.green, // Fix Colors.emerald missing in Flutter Swatch
+            useMaterial3: true,
+            fontFamily: 'Roboto',
+          ),
+          home: isAuthenticated ? const HomeScreen() : const PhoneInputScreen(),
         ),
-        BlocProvider<ProductBloc>(
-          create: (context) => ProductBloc(
-            getProductsUseCase: getProductsUseCase,
-          )..add(const FetchProductsEvent()), // Pre-load products on startup
-        ),
-      ],
-      child: MaterialApp(
-        title: 'FreshCart Mobile App',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.green, // Fix Colors.emerald missing in Flutter Swatch
-          useMaterial3: true,
-          fontFamily: 'Roboto',
-        ),
-        home: isAuthenticated ? const HomeScreen() : const PhoneInputScreen(),
       ),
     );
   }
@@ -101,4 +111,17 @@ class _MockAuthRepository implements AuthRepository {
   Future<String?> getToken() async => null;
   @override
   Future<void> clearToken() async {}
+}
+
+class _MockProductRepository implements ProductRepository {
+  @override
+  Future<List<Product>> getProducts({
+    required int page,
+    required int limit,
+    String? search,
+    int? categoryId,
+  }) async => [];
+
+  @override
+  Future<List<Category>> getCategories() async => [];
 }
