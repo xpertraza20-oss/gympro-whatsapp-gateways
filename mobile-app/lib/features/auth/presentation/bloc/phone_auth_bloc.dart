@@ -14,16 +14,29 @@ class SignupEvent extends AuthEvent {
   final String name;
   final String email;
   final String phone;
-  const SignupEvent({required this.name, required this.email, required this.phone});
+  final String location;
+  final String password;
+
+  const SignupEvent({
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.location,
+    required this.password,
+  });
+
   @override
-  List<Object?> get props => [name, email, phone];
+  List<Object?> get props => [name, email, phone, location, password];
 }
 
 class LoginEvent extends AuthEvent {
   final String email;
-  const LoginEvent({required this.email});
+  final String password;
+
+  const LoginEvent({required this.email, required this.password});
+
   @override
-  List<Object?> get props => [email];
+  List<Object?> get props => [email, password];
 }
 
 class VerifyOtpEvent extends AuthEvent {
@@ -37,7 +50,7 @@ class VerifyOtpEvent extends AuthEvent {
 class CheckAuthStatusEvent extends AuthEvent {}
 class LogoutEvent extends AuthEvent {}
 
-// Legacy phone event — kept for backward compat
+// Legacy phone event
 class RequestOtpEvent extends AuthEvent {
   final String phoneNumber;
   const RequestOtpEvent(this.phoneNumber);
@@ -54,10 +67,8 @@ abstract class AuthState extends Equatable {
 }
 
 class AuthInitial extends AuthState {}
-
 class AuthLoading extends AuthState {}
 
-/// OTP was sent — holds the email so the OTP screen knows where to verify
 class AuthOtpSent extends AuthState {
   final String email;
   const AuthOtpSent({required this.email});
@@ -96,12 +107,14 @@ class PhoneAuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onSignup(SignupEvent event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
-      await authRepository.signup(
+      final result = await authRepository.signup(
         name: event.name,
         email: event.email,
         phone: event.phone,
+        location: event.location,
+        password: event.password,
       );
-      emit(AuthOtpSent(email: event.email));
+      emit(AuthAuthenticated(result['token'] as String));
     } catch (e) {
       emit(AuthError(e.toString().replaceAll('Exception: ', '')));
     }
@@ -110,8 +123,11 @@ class PhoneAuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onLogin(LoginEvent event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
-      await authRepository.login(email: event.email);
-      emit(AuthOtpSent(email: event.email));
+      final result = await authRepository.login(
+        email: event.email,
+        password: event.password,
+      );
+      emit(AuthAuthenticated(result['token'] as String));
     } catch (e) {
       emit(AuthError(e.toString().replaceAll('Exception: ', '')));
     }

@@ -1,8 +1,19 @@
 import 'package:dio/dio.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<void> signup({required String name, required String email, required String phone});
-  Future<void> login({required String email});
+  Future<Map<String, dynamic>> signup({
+    required String name,
+    required String email,
+    required String phone,
+    required String location,
+    required String password,
+  });
+  
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  });
+  
   Future<Map<String, dynamic>> verifyOtp({required String email, required String otp});
   Future<void> requestOtp(String phoneNumber); // legacy
 }
@@ -12,28 +23,50 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthRemoteDataSourceImpl({required this.dio});
 
   @override
-  Future<void> signup({required String name, required String email, required String phone}) async {
+  Future<Map<String, dynamic>> signup({
+    required String name,
+    required String email,
+    required String phone,
+    required String location,
+    required String password,
+  }) async {
     try {
       final response = await dio.post('/api/v1/auth/signup', data: {
         'name': name,
         'email': email,
         'phone': phone,
+        'location': location,
+        'password': password,
       });
-      if (response.data?['success'] != true) {
-        throw Exception(response.data?['message'] ?? 'Signup failed');
+      if (response.data?['success'] == true) {
+        return {
+          'token': response.data['token'],
+          'user': response.data['user'],
+        };
       }
+      throw Exception(response.data?['message'] ?? 'Signup failed');
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
     }
   }
 
   @override
-  Future<void> login({required String email}) async {
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
     try {
-      final response = await dio.post('/api/v1/auth/login', data: {'email': email});
-      if (response.data?['success'] != true) {
-        throw Exception(response.data?['message'] ?? 'Login failed');
+      final response = await dio.post('/api/v1/auth/login', data: {
+        'email': email,
+        'password': password,
+      });
+      if (response.data?['success'] == true) {
+        return {
+          'token': response.data['token'],
+          'user': response.data['user'],
+        };
       }
+      throw Exception(response.data?['message'] ?? 'Login failed');
     } on DioException catch (e) {
       throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
     }

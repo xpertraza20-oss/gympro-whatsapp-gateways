@@ -57,7 +57,7 @@ const initializeDatabase = async () => {
     await client.query(createUsersTable);
     console.log('Users table checked/created.');
 
-    // 2.1.1 Add email columns if this is an upgrade from phone-only schema
+    // 2.1.1 Add email, phone, password, location columns if this is an upgrade from phone-only schema
     const alterUsersAddEmail = `
       DO $$
       BEGIN
@@ -69,6 +69,12 @@ const initializeDatabase = async () => {
         END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_verified') THEN
           ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT false;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='password') THEN
+          ALTER TABLE users ADD COLUMN password VARCHAR(255);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='location') THEN
+          ALTER TABLE users ADD COLUMN location VARCHAR(255);
         END IF;
       END
       $$;

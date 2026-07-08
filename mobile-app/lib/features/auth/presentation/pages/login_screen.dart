@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/phone_auth_bloc.dart';
-import 'otp_verification_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,9 +14,12 @@ class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _formKey    = GlobalKey<FormState>();
   final _emailCtrl  = TextEditingController();
+  final _passCtrl   = TextEditingController();
+  
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
   late Animation<Offset>  _slideAnim;
+  bool _obscurePass = true;
 
   @override
   void initState() {
@@ -36,34 +38,25 @@ class _LoginScreenState extends State<LoginScreen>
   void dispose() {
     _animCtrl.dispose();
     _emailCtrl.dispose();
+    _passCtrl.dispose();
     super.dispose();
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    context.read<PhoneAuthBloc>().add(LoginEvent(email: _emailCtrl.text.trim()));
+    context.read<PhoneAuthBloc>().add(LoginEvent(
+      email: _emailCtrl.text.trim(),
+      password: _passCtrl.text,
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PhoneAuthBloc, AuthState>(
       listener: (ctx, state) {
-        if (state is AuthOtpSent) {
-          Navigator.of(ctx).push(
-            PageRouteBuilder(
-              pageBuilder: (_, anim, __) =>
-                  OtpVerificationScreen(email: state.email),
-              transitionsBuilder: (_, anim, __, child) => SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(1, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-                child: child,
-              ),
-              transitionDuration: const Duration(milliseconds: 400),
-            ),
-          );
+        if (state is AuthAuthenticated) {
+          Navigator.of(ctx).pushNamedAndRemoveUntil('/home', (_) => false);
         } else if (state is AuthError) {
           ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
             content: Row(
@@ -239,6 +232,62 @@ class _LoginScreenState extends State<LoginScreen>
                                         return null;
                                       },
                                     ),
+                                    const SizedBox(height: 16),
+
+                                    // Password Input field
+                                    TextFormField(
+                                      controller: _passCtrl,
+                                      obscureText: _obscurePass,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      cursorColor: const Color(0xFF10B981),
+                                      validator: (v) {
+                                        if (v == null || v.isEmpty) return 'Please enter your password';
+                                        if (v.length < 6) return 'Password must be at least 6 characters';
+                                        return null;
+                                      },
+                                      decoration: InputDecoration(
+                                        labelText: 'Password',
+                                        labelStyle: TextStyle(color: Colors.white.withAlpha(140), fontSize: 14),
+                                        hintStyle: TextStyle(color: Colors.white.withAlpha(60), fontSize: 14),
+                                        prefixIcon: const Padding(
+                                          padding: EdgeInsets.symmetric(horizontal: 16),
+                                          child: Icon(Icons.lock_outline_rounded, color: Color(0xFF10B981), size: 22),
+                                        ),
+                                        prefixIconConstraints: const BoxConstraints(minWidth: 40),
+                                        suffixIcon: IconButton(
+                                          icon: Icon(
+                                            _obscurePass ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                                            color: Colors.white.withAlpha(140),
+                                            size: 20,
+                                          ),
+                                          onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.white.withAlpha(8),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                          borderSide: BorderSide(color: Colors.white.withAlpha(20), width: 1),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                          borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
+                                        ),
+                                        errorBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1),
+                                        ),
+                                        focusedErrorBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
+                                        ),
+                                        errorStyle: const TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.w500),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                                      ),
+                                    ),
                                     const SizedBox(height: 28),
 
                                     // Elevate / Submit Button
@@ -280,7 +329,7 @@ class _LoginScreenState extends State<LoginScreen>
                                                   ),
                                                 )
                                               : const Text(
-                                                  'Send Verification Code',
+                                                  'Sign In',
                                                   style: TextStyle(
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.w700,
@@ -301,6 +350,7 @@ class _LoginScreenState extends State<LoginScreen>
                               onTap: () {
                                 setState(() {
                                   _emailCtrl.text = 'alimughalsab20100@gmail.com';
+                                  _passCtrl.text = 'password123';
                                 });
                               },
                               child: Container(

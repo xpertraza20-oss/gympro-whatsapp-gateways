@@ -14,13 +14,35 @@ class AuthRepositoryImpl implements AuthRepository {
   });
 
   @override
-  Future<void> signup({required String name, required String email, required String phone}) async {
-    await remoteDataSource.signup(name: name, email: email, phone: phone);
+  Future<Map<String, dynamic>> signup({
+    required String name,
+    required String email,
+    required String phone,
+    required String location,
+    required String password,
+  }) async {
+    final result = await remoteDataSource.signup(
+      name: name,
+      email: email,
+      phone: phone,
+      location: location,
+      password: password,
+    );
+    await saveToken(result['token'] as String);
+    return result;
   }
 
   @override
-  Future<void> login({required String email}) async {
-    await remoteDataSource.login(email: email);
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
+    final result = await remoteDataSource.login(
+      email: email,
+      password: password,
+    );
+    await saveToken(result['token'] as String);
+    return result;
   }
 
   @override

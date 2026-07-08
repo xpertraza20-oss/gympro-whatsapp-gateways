@@ -137,10 +137,43 @@ class MyApp extends StatelessWidget {
 
 class _MockAuthRepository implements AuthRepository {
   @override
-  Future<void> signup({required String name, required String email, required String phone}) async {}
+  Future<Map<String, dynamic>> signup({
+    required String name,
+    required String email,
+    required String phone,
+    required String location,
+    required String password,
+  }) async {
+    return {
+      'token': 'mock_token',
+      'user': {
+        'id': 1,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'location': location,
+        'is_verified': true,
+      }
+    };
+  }
 
   @override
-  Future<void> login({required String email}) async {}
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
+    return {
+      'token': 'mock_token',
+      'user': {
+        'id': 1,
+        'name': 'Mock User',
+        'email': email,
+        'phone': '1234567890',
+        'location': 'Lahore, PK',
+        'is_verified': true,
+      }
+    };
+  }
 
   @override
   Future<Map<String, dynamic>> verifyOtp({required String email, required String otp}) async {

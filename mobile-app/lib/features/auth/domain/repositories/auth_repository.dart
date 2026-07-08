@@ -1,9 +1,18 @@
 abstract class AuthRepository {
-  /// Signup: creates account + sends email OTP
-  Future<void> signup({required String name, required String email, required String phone});
+  /// Signup with email/password and location
+  Future<Map<String, dynamic>> signup({
+    required String name,
+    required String email,
+    required String phone,
+    required String location,
+    required String password,
+  });
 
-  /// Login: sends email OTP to existing account
-  Future<void> login({required String email});
+  /// Login with email and password
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  });
 
   /// Verify OTP + get JWT
   Future<Map<String, dynamic>> verifyOtp({required String email, required String otp});
@@ -13,6 +22,6 @@ abstract class AuthRepository {
   Future<String?> getToken();
   Future<void> clearToken();
 
-  // Legacy phone support (kept for backward compat)
+  // Legacy phone support
   Future<void> requestOtp(String phoneNumber);
 }
