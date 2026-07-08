@@ -22,13 +22,10 @@ import 'features/product_catalog/presentation/bloc/product_event.dart';
 import 'features/product_catalog/presentation/pages/home_screen.dart';
 import 'features/cart/presentation/bloc/cart_bloc.dart';
 import 'features/cart/presentation/bloc/cart_event.dart';
-import 'features/cart/presentation/bloc/cart_state.dart';
 import 'features/checkout/data/datasources/order_remote_data_source.dart';
 import 'features/checkout/data/repositories/order_repository_impl.dart';
 import 'features/checkout/domain/repositories/order_repository.dart';
 import 'features/checkout/presentation/bloc/order_bloc.dart';
-import 'features/checkout/presentation/bloc/order_event.dart';
-import 'features/checkout/presentation/bloc/order_state.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
