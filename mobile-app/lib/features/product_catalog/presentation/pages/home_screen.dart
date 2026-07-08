@@ -12,10 +12,12 @@ import '../widgets/product_card_widget.dart';
 import 'package:grocery_app/features/product_catalog/domain/entities/category.dart';
 import 'package:grocery_app/features/product_catalog/domain/usecases/get_categories_usecase.dart';
 import 'package:grocery_app/features/product_catalog/domain/repositories/product_repository.dart';
+import 'product_details_screen.dart';
 import '../../../cart/presentation/bloc/cart_bloc.dart';
 import '../../../cart/presentation/bloc/cart_event.dart';
 import '../../../cart/presentation/bloc/cart_state.dart';
 import '../../../cart/presentation/widgets/cart_bottom_sheet.dart';
+import '../../../checkout/presentation/pages/order_history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -134,6 +136,18 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: const Color(0xFF10B981),
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long_outlined, color: Colors.white),
+            tooltip: 'Order History',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OrderHistoryScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             tooltip: 'Logout',
@@ -440,6 +454,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             return ProductCardWidget(
                               product: products[index],
                               onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProductDetailsScreen(product: products[index]),
+                                  ),
+                                );
+                              },
+                              onAddToCart: () {
                                 context.read<CartBloc>().add(AddToCartEvent(products[index]));
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(

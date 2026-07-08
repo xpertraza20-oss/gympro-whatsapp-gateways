@@ -21,7 +21,12 @@ import 'features/product_catalog/presentation/pages/home_screen.dart';
 import 'features/cart/presentation/bloc/cart_bloc.dart';
 import 'features/cart/presentation/bloc/cart_event.dart';
 import 'features/cart/presentation/bloc/cart_state.dart';
-
+import 'features/checkout/data/datasources/order_remote_data_source.dart';
+import 'features/checkout/data/repositories/order_repository_impl.dart';
+import 'features/checkout/domain/repositories/order_repository.dart';
+import 'features/checkout/presentation/bloc/order_bloc.dart';
+import 'features/checkout/presentation/bloc/order_event.dart';
+import 'features/checkout/presentation/bloc/order_state.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -54,11 +59,16 @@ void main() async {
   final productRepository = ProductRepositoryImpl(remoteDataSource: productRemoteDataSource);
   final getProductsUseCase = GetProductsUseCase(productRepository);
 
+  // 6. Initialize checkout feature dependencies
+  final orderRemoteDataSource = OrderRemoteDataSourceImpl(dio: dioClient.dio);
+  final orderRepository = OrderRepositoryImpl(remoteDataSource: orderRemoteDataSource);
+
   runApp(
     MyApp(
       getProductsUseCase: getProductsUseCase,
       productRepository: productRepository,
       authRepository: authRepository,
+      orderRepository: orderRepository,
       isAuthenticated: isAuthenticated,
     ),
   );
@@ -68,6 +78,7 @@ class MyApp extends StatelessWidget {
   final GetProductsUseCase getProductsUseCase;
   final ProductRepository? productRepository;
   final AuthRepository? authRepository;
+  final OrderRepository? orderRepository;
   final bool isAuthenticated;
 
   const MyApp({
@@ -75,6 +86,7 @@ class MyApp extends StatelessWidget {
     required this.getProductsUseCase,
     this.productRepository,
     this.authRepository,
+    this.orderRepository,
     this.isAuthenticated = false,
   });
 
@@ -82,6 +94,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final activeAuthRepo = authRepository ?? _MockAuthRepository();
     final activeProductRepo = productRepository ?? _MockProductRepository();
+    final activeOrderRepo = orderRepository ?? _MockOrderRepository();
 
     return RepositoryProvider<ProductRepository>.value(
       value: activeProductRepo,
@@ -97,6 +110,9 @@ class MyApp extends StatelessWidget {
           ),
           BlocProvider<CartBloc>(
             create: (context) => CartBloc(),
+          ),
+          BlocProvider<OrderBloc>(
+            create: (context) => OrderBloc(orderRepository: activeOrderRepo),
           ),
         ],
         child: MaterialApp(
@@ -138,4 +154,20 @@ class _MockProductRepository implements ProductRepository {
 
   @override
   Future<List<Category>> getCategories() async => [];
+}
+
+class _MockOrderRepository implements OrderRepository {
+  @override
+  Future<Map<String, dynamic>> placeOrder({
+    required List<Map<String, dynamic>> items,
+    required String deliveryAddress,
+    required double totalAmount,
+    required String paymentMethod,
+  }) async => {};
+
+  @override
+  Future<List<dynamic>> getOrderHistory() async => [];
+
+  @override
+  Future<Map<String, dynamic>> getOrderById(int id) async => {};
 }

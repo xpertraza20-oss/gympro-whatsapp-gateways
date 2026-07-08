@@ -6,11 +6,13 @@ import '../../domain/entities/product.dart';
 class ProductCardWidget extends StatelessWidget {
   final Product product;
   final VoidCallback? onTap;
+  final VoidCallback? onAddToCart;
 
   const ProductCardWidget({
     super.key,
     required this.product,
     this.onTap,
+    this.onAddToCart,
   });
 
   @override
@@ -161,16 +163,19 @@ class ProductCardWidget extends StatelessWidget {
                           fontSize: 16,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF10B981).withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add_shopping_cart,
-                          size: 16,
-                          color: Color(0xFF10B981),
+                      GestureDetector(
+                        onTap: onAddToCart,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.add_shopping_cart,
+                            size: 16,
+                            color: Color(0xFF10B981),
+                          ),
                         ),
                       ),
                     ],

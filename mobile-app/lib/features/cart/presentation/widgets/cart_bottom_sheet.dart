@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../bloc/cart_bloc.dart';
 import '../bloc/cart_event.dart';
 import '../bloc/cart_state.dart';
+import '../../../checkout/presentation/pages/checkout_screen.dart';
 
 class CartBottomSheet extends StatelessWidget {
   const CartBottomSheet({super.key});
@@ -244,18 +245,12 @@ class CartBottomSheet extends StatelessWidget {
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: () {
+                             onPressed: () {
                               Navigator.pop(context); // Close bottom sheet
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('Proceeding to Checkout...'),
-                                  backgroundColor: const Color(0xFF10B981),
-                                  behavior: SnackBarBehavior.floating,
-                                  action: SnackBarAction(
-                                    label: 'Dismiss',
-                                    textColor: Colors.white,
-                                    onPressed: () {},
-                                  ),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const CheckoutScreen(),
                                 ),
                               );
                             },
