@@ -66,6 +66,22 @@ const initializeDatabase = async () => {
     await client.query(createOtpsTable);
     console.log('OTPs table checked/created.');
 
+    // 2.3. Create orders table
+    const createOrdersTable = `
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        delivery_address TEXT NOT NULL,
+        total_amount DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
+        payment_method VARCHAR(50) DEFAULT 'COD',
+        status VARCHAR(50) DEFAULT 'Pending',
+        items JSONB NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    await client.query(createOrdersTable);
+    console.log('Orders table checked/created.');
+
     // 3. Create B-Tree index on products(category_id)
     const createCategoryIdx = `
       CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
