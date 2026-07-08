@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 import 'core/network/dio_client.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
@@ -16,9 +18,18 @@ import 'features/product_catalog/domain/entities/product.dart';
 import 'features/product_catalog/presentation/bloc/product_bloc.dart';
 import 'features/product_catalog/presentation/bloc/product_event.dart';
 import 'features/product_catalog/presentation/pages/home_screen.dart';
+import 'features/cart/presentation/bloc/cart_bloc.dart';
+import 'features/cart/presentation/bloc/cart_event.dart';
+import 'features/cart/presentation/bloc/cart_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize local hydrated storage for persistent state
+  final storage = await HydratedStorage.build(
+    storageDirectory: HydratedStorageDirectory((await getApplicationDocumentsDirectory()).path),
+  );
+  HydratedBloc.storage = storage;
 
   // 1. Initialize secure storage
   const secureStorage = FlutterSecureStorage();
@@ -83,6 +94,9 @@ class MyApp extends StatelessWidget {
             create: (context) => ProductBloc(
               getProductsUseCase: getProductsUseCase,
             )..add(const FetchProductsEvent()), // Pre-load products on startup
+          ),
+          BlocProvider<CartBloc>(
+            create: (context) => CartBloc(),
           ),
         ],
         child: MaterialApp(

@@ -5,6 +5,7 @@ import 'package:grocery_app/features/product_catalog/domain/entities/category.da
 import 'package:grocery_app/features/product_catalog/domain/repositories/product_repository.dart';
 import 'package:grocery_app/features/product_catalog/domain/usecases/get_products_usecase.dart';
 import 'package:grocery_app/main.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 
 // Mock Product Repository for testing
 class MockProductRepository implements ProductRepository {
@@ -37,7 +38,25 @@ class MockProductRepository implements ProductRepository {
   }
 }
 
+class MockStorage implements Storage {
+  @override
+  dynamic read(String key) => null;
+  @override
+  Future<void> write(String key, dynamic value) async {}
+  @override
+  Future<void> delete(String key) async {}
+  @override
+  Future<void> clear() async {}
+  @override
+  Future<void> close() async {}
+}
+
 void main() {
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    HydratedBloc.storage = MockStorage();
+  });
+
   testWidgets('Grocery App Catalog smoke test', (WidgetTester tester) async {
     final mockRepository = MockProductRepository();
     final getProductsUseCase = GetProductsUseCase(mockRepository);
