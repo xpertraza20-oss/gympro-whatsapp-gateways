@@ -63,3 +63,95 @@ exports.getAllUsers = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * PUT /api/v1/admin/users/:id
+ * Updates customer details (name, email, phone)
+ */
+exports.updateUser = async (req, res, next) => {
+  const { id } = req.params;
+  const { name, email, phone } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({
+      success: false,
+      message: 'Name and email are required fields.'
+    });
+  }
+
+  try {
+    // Check if email conflict exists for another user
+    const conflictRes = await pool.query(
+      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      [email.toLowerCase().trim(), id]
+    );
+
+    if (conflictRes.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'This email is already in use by another customer.'
+      });
+    }
+
+    const updateRes = await pool.query(
+      `UPDATE users
+       SET name = $1, email = $2, phone = $3, phone_number = $3
+       WHERE id = $4
+       RETURNING *`,
+      [name.trim(), email.toLowerCase().trim(), phone ? phone.trim() : null, id]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found.'
+      });
+    }
+
+    const updated = updateRes.rows[0];
+
+    return res.status(200).json({
+      success: true,
+      message: 'Customer details updated successfully.',
+      user: {
+        id: updated.id,
+        name: updated.name,
+        email: updated.email,
+        phone: updated.phone || updated.phone_number || 'N/A'
+      }
+    });
+  } catch (err) {
+    console.error('Error in updateUser:', err);
+    next(err);
+  }
+};
+
+/**
+ * DELETE /api/v1/admin/users/:id
+ * Deletes a customer account from database
+ */
+exports.deleteUser = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const deleteRes = await pool.query(
+      'DELETE FROM users WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (deleteRes.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Customer account successfully deleted.'
+    });
+  } catch (err) {
+    console.error('Error in deleteUser:', err);
+    next(err);
+  }
+};

@@ -6,9 +6,15 @@ import {
   Mail, 
   Phone, 
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  Edit2,
+  Trash2,
+  X,
+  CheckCircle
 } from 'lucide-react';
 import { getBackendUrl } from '../utils/config';
+import { getSwal, showToast } from '../utils/alerts';
 
 interface Customer {
   id: number;
@@ -24,13 +30,25 @@ export default function CustomerTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modals state
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  
+  // Form state
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const token = 'admin-secret-token';
 
   // Fetch live customers from Render backend
   const fetchCustomers = async () => {
     setLoading(true);
     setError(null);
     try {
-      const token = 'admin-secret-token';
       const res = await fetch(`${getBackendUrl()}/api/v1/admin/users?limit=100`, {
         method: 'GET',
         headers: {
@@ -105,6 +123,116 @@ export default function CustomerTable() {
     return colors[sum % colors.length];
   };
 
+  // Open details modal
+  const handleOpenDetails = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setIsDetailsOpen(true);
+  };
+
+  // Open edit modal
+  const handleOpenEdit = (customer: Customer, e: React.MouseEvent) => {
+    e.stopPropagation(); // prevent triggering view details from row click
+    setSelectedCustomer(customer);
+    setEditName(customer.name);
+    setEditEmail(customer.email);
+    setEditPhone(customer.phone === 'N/A' ? '' : customer.phone);
+    setIsEditOpen(true);
+  };
+
+  // Submit edit details to backend
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCustomer) return;
+    
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${getBackendUrl()}/api/v1/admin/users/${selectedCustomer.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-Admin-Token': token,
+          'bypass-tunnel-reminder': 'true',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: editName,
+          email: editEmail,
+          phone: editPhone
+        })
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.message || 'Failed to update customer');
+      }
+
+      showToast('success', 'Customer profile updated successfully.');
+      
+      // Update state locally
+      setCustomers(prev => prev.map(c => 
+        c.id === selectedCustomer.id 
+          ? { ...c, name: editName, email: editEmail, phone: editPhone || 'N/A' } 
+          : c
+      ));
+      
+      setIsEditOpen(false);
+      setSelectedCustomer(null);
+    } catch (err: any) {
+      console.error('Update failed:', err);
+      getSwal().fire({
+        title: 'Error!',
+        text: err.message || 'Failed to update customer profile.',
+        icon: 'error'
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Delete customer account
+  const handleDeleteCustomer = async (id: number, name: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const result = await getSwal().fire({
+      title: 'Delete Customer?',
+      text: `Are you sure you want to permanently delete the account of "${name}"? This will restrict their login and clear their data.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete permanently',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#EF4444',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`${getBackendUrl()}/api/v1/admin/users/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-Admin-Token': token,
+            'bypass-tunnel-reminder': 'true'
+          }
+        });
+
+        const json = await res.json();
+        if (!res.ok) {
+          throw new Error(json.message || 'Failed to delete customer');
+        }
+
+        showToast('success', 'Customer account deleted successfully.');
+        setCustomers(prev => prev.filter(c => c.id !== id));
+      } catch (err: any) {
+        console.error('Delete failed:', err);
+        getSwal().fire({
+          title: 'Error!',
+          text: err.message || 'Failed to delete customer account.',
+          icon: 'error'
+        });
+      }
+    }
+  };
+
   // Client-side search / filter logic
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -121,7 +249,7 @@ export default function CustomerTable() {
             Registered Customer Base
           </h2>
           <p className="text-xs text-text-secondary mt-0.5">
-            Audit registered and verified customers on the FreshCart application.
+            Audit, edit, view details, or permanently delete customer profiles.
           </p>
         </div>
         <button
@@ -183,6 +311,7 @@ export default function CustomerTable() {
                   <th className="px-6 py-4.5">Email Status</th>
                   <th className="px-6 py-4.5">Phone Number</th>
                   <th className="px-6 py-4.5">Registration Date</th>
+                  <th className="px-6 py-4.5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-card/60 text-sm">
@@ -192,7 +321,11 @@ export default function CustomerTable() {
                     const initials = getInitials(customer.name);
                     
                     return (
-                      <tr key={customer.id} className="hover:bg-hover-panel transition-colors duration-150">
+                      <tr 
+                        key={customer.id} 
+                        onClick={() => handleOpenDetails(customer)}
+                        className="hover:bg-hover-panel transition-colors duration-150 cursor-pointer"
+                      >
                         {/* Profile Info with Avatar */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -231,12 +364,42 @@ export default function CustomerTable() {
                             <span>{formatToDDMMYYYY(customer.joining_date)}</span>
                           </div>
                         </td>
+
+                        {/* Actions buttons */}
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenDetails(customer);
+                              }}
+                              className="rounded-lg p-2 text-text-secondary hover:bg-hover-panel hover:text-emerald-400 transition-colors"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => handleOpenEdit(customer, e)}
+                              className="rounded-lg p-2 text-text-secondary hover:bg-hover-panel hover:text-blue-400 transition-colors"
+                              title="Edit Profile"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => handleDeleteCustomer(customer.id, customer.name, e)}
+                              className="rounded-lg p-2 text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                              title="Delete Account"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-6 py-16 text-center text-text-secondary">
+                    <td colSpan={5} className="px-6 py-16 text-center text-text-secondary">
                       No customers found matching search term.
                     </td>
                   </tr>
@@ -246,6 +409,166 @@ export default function CustomerTable() {
           </div>
         )}
       </div>
+
+      {/* ─── MODAL 1: VIEW DETAILS ────────────────────────────────────────── */}
+      {isDetailsOpen && selectedCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-2xl border border-border-card bg-panel p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+            {/* Close */}
+            <button
+              onClick={() => {
+                setIsDetailsOpen(false);
+                setSelectedCustomer(null);
+              }}
+              className="absolute right-4 top-4 rounded-lg p-1.5 text-text-secondary hover:bg-hover-panel hover:text-text-primary transition-colors cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Profile Large Badge */}
+            <div className="flex flex-col items-center text-center space-y-3 pb-4 border-b border-border-card/60">
+              <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border text-xl font-bold ${getAvatarColor(selectedCustomer.name)}`}>
+                {getInitials(selectedCustomer.name)}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-text-primary">{selectedCustomer.name}</h3>
+                <span className="text-xs text-text-secondary font-mono">ID: CST-{selectedCustomer.id}</span>
+              </div>
+            </div>
+
+            {/* Details Fields */}
+            <div className="mt-5 space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary font-medium">Email Address:</span>
+                <span className="text-text-primary font-semibold">{selectedCustomer.email}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary font-medium">Phone Number:</span>
+                <span className="text-text-primary font-mono font-semibold">{selectedCustomer.phone}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary font-medium">Verification Status:</span>
+                <span className="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                  <CheckCircle className="h-4 w-4" /> Verified
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-secondary font-medium">Registration Date:</span>
+                <span className="text-text-primary font-semibold">{formatToDDMMYYYY(selectedCustomer.joining_date)}</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={(e) => {
+                  setIsDetailsOpen(false);
+                  handleOpenEdit(selectedCustomer, e);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-xs font-semibold text-slate-950 hover:brightness-110 active:scale-98 transition-all cursor-pointer"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+                <span>Edit Profile</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  setIsDetailsOpen(false);
+                  handleDeleteCustomer(selectedCustomer.id, selectedCustomer.name, e);
+                }}
+                className="rounded-xl border border-red-500/20 hover:bg-red-500/10 text-red-400 px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL 2: EDIT PROFILE ────────────────────────────────────────── */}
+      {isEditOpen && selectedCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-md rounded-2xl border border-border-card bg-panel p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+            {/* Close */}
+            <button
+              onClick={() => {
+                setIsEditOpen(false);
+                setSelectedCustomer(null);
+              }}
+              className="absolute right-4 top-4 rounded-lg p-1.5 text-text-secondary hover:bg-hover-panel hover:text-text-primary transition-colors cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
+              <Edit2 className="h-5 w-5 text-emerald-400" />
+              Edit Customer Profile
+            </h3>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              {/* Name */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-text-secondary uppercase">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full rounded-xl bg-bg-input border border-border-card p-3 text-sm text-text-primary focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-text-secondary uppercase">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full rounded-xl bg-bg-input border border-border-card p-3 text-sm text-text-primary focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              {/* Phone */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-text-secondary uppercase">Phone Number</label>
+                <input
+                  type="text"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  placeholder="+92 300 1234567"
+                  className="w-full rounded-xl bg-bg-input border border-border-card p-3 text-sm text-text-primary focus:outline-none focus:border-emerald-500 font-mono"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditOpen(false);
+                    setSelectedCustomer(null);
+                  }}
+                  className="flex-1 rounded-xl border border-border-card py-2.5 text-xs font-semibold text-text-secondary hover:bg-hover-panel transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-xs font-semibold text-slate-950 hover:brightness-110 active:scale-98 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {submitting ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
