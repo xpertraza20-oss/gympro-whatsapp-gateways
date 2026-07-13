@@ -13,6 +13,7 @@ export const getSwal = () => {
       popup: `rounded-3xl border ${isDark ? 'border-slate-800' : 'border-slate-200'} shadow-2xl font-sans p-6`,
       title: 'text-lg font-bold font-sans tracking-tight',
       htmlContainer: `${isDark ? 'text-slate-400' : 'text-slate-500'} text-sm font-sans mt-2`,
+      input: `rounded-xl border ${isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'} px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 m-2 w-full max-w-xs inline-block text-center`,
       confirmButton: 'rounded-xl bg-emerald-500 text-slate-950 px-5 py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer hover:brightness-110 active:scale-95 shadow-md shadow-emerald-500/10 focus:outline-none mx-1.5',
       cancelButton: 'rounded-xl bg-red-500 text-white px-5 py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer hover:brightness-110 active:scale-95 shadow-md shadow-red-500/10 focus:outline-none mx-1.5',
       denyButton: 'rounded-xl bg-slate-500 text-white px-5 py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer hover:brightness-110 active:scale-95 focus:outline-none mx-1.5'

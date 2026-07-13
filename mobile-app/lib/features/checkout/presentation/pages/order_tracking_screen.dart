@@ -18,6 +18,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Timer? _pollingTimer;
   Map<String, dynamic>? _cachedOrder;
   String? _errorMessage;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -77,21 +78,37 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ),
       body: BlocListener<OrderBloc, OrderState>(
         listener: (context, state) {
-          if (state is OrderTrackingLoaded && 
+          if (state is OrderLoading) {
+            setState(() {
+              _isLoading = true;
+            });
+          } else if (state is OrderTrackingLoaded && 
               (state.order['id'] == widget.orderId || 
                state.order['id'].toString() == widget.orderId.toString())) {
             setState(() {
               _cachedOrder = state.order;
               _errorMessage = null;
+              _isLoading = false;
             });
-          } else if (state is OrderError && _cachedOrder == null) {
+          } else if (state is OrderError) {
             setState(() {
-              _errorMessage = state.message;
+              _isLoading = false;
+              if (_cachedOrder == null) {
+                _errorMessage = state.message;
+              }
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: ${state.message}'), backgroundColor: Colors.redAccent),
+            );
+          } else {
+            // Ignore unrelated states (like history loaded)
+            setState(() {
+              _isLoading = false;
             });
           }
         },
-        child: BlocBuilder<OrderBloc, OrderState>(
-          builder: (context, state) {
+        child: Builder(
+          builder: (context) {
             // Render from cache if available to prevent UI refresh flicker/load spinner
             if (_cachedOrder != null) {
               final order = _cachedOrder!;

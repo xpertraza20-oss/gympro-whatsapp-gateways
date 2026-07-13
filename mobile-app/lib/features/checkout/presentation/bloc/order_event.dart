@@ -50,7 +50,7 @@ class CancelOrderEvent extends OrderEvent {
 class DeleteOrderEvent extends OrderEvent {
   final int orderId;
 
-  const DeleteOrderEvent({required this.orderId});
+  const DeleteOrderEvent(this.orderId);
 
   @override
   List<Object?> get props => [orderId];

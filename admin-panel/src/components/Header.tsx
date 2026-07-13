@@ -10,6 +10,7 @@ interface HeaderProps {
 }
 
 const THEMES_LIST = [
+  { id: 'theme-foodexpress', label: 'FoodExpress Royal', bg: '#fff8f7', accent: '#ac004d' },
   { id: 'theme-light-default', label: 'Frosted Opal', bg: '#f8fafc', accent: '#10b981' },
   { id: 'theme-nordic-frost', label: 'Nordic Frost', bg: '#f0f7ff', accent: '#0284c7' },
   { id: 'theme-emerald-glass', label: 'Emerald Glass', bg: '#f0fdf4', accent: '#059669' },

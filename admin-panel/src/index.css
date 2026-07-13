@@ -33,6 +33,23 @@
   --glass-card-border: rgba(15, 23, 42, 0.04);
 }
 
+.theme-foodexpress {
+  --bg-body: #fff8f7;
+  --bg-panel: rgba(255, 255, 255, 0.85);
+  --border-card: rgba(172, 0, 77, 0.08);
+  --text-primary: #27171b;
+  --text-secondary: #5a3f45;
+  --bg-input: #ffffff;
+  --border-input: rgba(172, 0, 77, 0.12);
+  --hover-panel: rgba(172, 0, 77, 0.04);
+  --accent-primary: #ac004d;
+  --accent-secondary: #006b56;
+  --glass-panel-bg: rgba(255, 255, 255, 0.8);
+  --glass-panel-border: rgba(172, 0, 77, 0.08);
+  --glass-card-bg: rgba(255, 255, 255, 0.9);
+  --glass-card-border: rgba(172, 0, 77, 0.05);
+}
+
 /* 1. Frosted Opal */
 .theme-light-default {
   --bg-body: #f8fafc;

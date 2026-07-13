@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Settings, 
-  Store, 
-  CreditCard, 
-  Truck, 
+import {
+  Settings,
+  Store,
+  CreditCard,
+  Truck,
   Save,
   Server,
   Globe,
@@ -27,6 +27,7 @@ interface SettingsViewProps {
 }
 
 const THEMES_GRID = [
+  { id: 'theme-foodexpress', label: 'FoodExpress Royal', bg: 'bg-[#fff8f7]', accent: 'bg-[#ac004d]', desc: 'Premium Pink & Emerald corporate theme inspired by FoodExpress.' },
   { id: 'theme-light-default', label: 'Frosted Opal', bg: 'bg-[#f8fafc]', accent: 'bg-[#10b981]', desc: 'Bright frosted glass mode for high readability.' },
   { id: 'theme-nordic-frost', label: 'Nordic Frost', bg: 'bg-[#f0f7ff]', accent: 'bg-[#0284c7]', desc: 'Crisp polar ice blue background.' },
   { id: 'theme-emerald-glass', label: 'Emerald Glass', bg: 'bg-[#f0fdf4]', accent: 'bg-[#059669]', desc: 'Premium soft organic green blur.' },
@@ -170,13 +171,12 @@ export default function SettingsView({ theme, setTheme }: SettingsViewProps) {
               type="button"
               onClick={handleTestAndSaveBackendUrl}
               disabled={isTesting}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
-                testStatus === 'success' 
-                  ? 'bg-emerald-500 text-white' 
-                  : testStatus === 'error' 
-                    ? 'bg-red-500/20 text-red-400 border border-red-500/40' 
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${testStatus === 'success'
+                  ? 'bg-emerald-500 text-white'
+                  : testStatus === 'error'
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/40'
                     : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
-              }`}
+                }`}
             >
               {isTesting ? (
                 <span className="h-4 w-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
@@ -195,15 +195,14 @@ export default function SettingsView({ theme, setTheme }: SettingsViewProps) {
               Reset to Default
             </button>
           </div>
-          <div className={`text-xs rounded-lg px-3 py-2 ${
-            testStatus === 'success' 
-              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+          <div className={`text-xs rounded-lg px-3 py-2 ${testStatus === 'success'
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
               : testStatus === 'error'
                 ? 'bg-red-500/10 text-red-400 border border-red-500/20'
                 : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-          }`}>
-            {testStatus === 'success' 
-              ? 'Backend is online and URL saved. Products and categories will load from this server.' 
+            }`}>
+            {testStatus === 'success'
+              ? 'Backend is online and URL saved. Products and categories will load from this server.'
               : testStatus === 'error'
                 ? 'Could not reach backend. Check that the Worker URL is publicly accessible.'
                 : 'Currently using: ' + backendUrl + ' - click "Test & Save" to verify connection.'
@@ -313,7 +312,7 @@ export default function SettingsView({ theme, setTheme }: SettingsViewProps) {
                 <p className="text-sm font-semibold text-text-primary">Cash on Delivery (COD)</p>
                 <p className="text-xs text-text-secondary">Accept physical currency payment on parcel drop-off</p>
               </div>
-              <input 
+              <input
                 type="checkbox"
                 checked={codEnabled}
                 onChange={(e) => setCodEnabled(e.target.checked)}
@@ -326,7 +325,7 @@ export default function SettingsView({ theme, setTheme }: SettingsViewProps) {
                 <p className="text-sm font-semibold text-text-primary">Stripe Credit Card processing</p>
                 <p className="text-xs text-text-secondary">Enable live client-side credit card authorization and deposit payouts</p>
               </div>
-              <input 
+              <input
                 type="checkbox"
                 checked={stripeEnabled}
                 onChange={(e) => setStripeEnabled(e.target.checked)}
@@ -352,11 +351,10 @@ export default function SettingsView({ theme, setTheme }: SettingsViewProps) {
                 key={t.id}
                 type="button"
                 onClick={() => setTheme(t.id)}
-                className={`flex items-center justify-between rounded-xl p-3 border transition-all duration-200 cursor-pointer ${
-                  theme === t.id
+                className={`flex items-center justify-between rounded-xl p-3 border transition-all duration-200 cursor-pointer ${theme === t.id
                     ? 'border-accent-primary bg-accent-primary/5 ring-1 ring-accent-primary/10 shadow-md'
                     : 'border-border-card/40 bg-bg-input hover:border-border-card hover:bg-hover-panel'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-4">
                   {/* Swatch circle */}
@@ -369,7 +367,7 @@ export default function SettingsView({ theme, setTheme }: SettingsViewProps) {
                     <span className="text-[10px] text-text-secondary block mt-0.5">{t.desc}</span>
                   </div>
                 </div>
-                
+
                 {/* Active check indicator */}
                 {theme === t.id && (
                   <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-primary text-white font-bold text-xs shrink-0 shadow-sm">
