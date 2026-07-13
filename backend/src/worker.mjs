@@ -1034,10 +1034,47 @@ app.get('/api/v1/orders/:id', authenticateUser, async (c) => {
   return c.json({ success: true, data: result.rows[0] });
 });
 
+app.put('/api/v1/orders/:id/cancel', authenticateUser, async (c) => {
+  const id = c.req.param('id');
+  const body = await jsonBody(c);
+  const user = c.get('user');
+  const reason = body.reason || body.cancel_reason;
+  if (!reason) throw httpError('Cancellation reason is required.', 400);
+
+  const check = await query(c.env, 'SELECT * FROM orders WHERE id = $1 AND user_id = $2;', [id, user.id]);
+  if (check.rows.length === 0) throw httpError('Order not found.', 404);
+
+  const order = check.rows[0];
+  if (order.status.toLowerCase() === 'delivered' || order.status.toLowerCase() === 'dispatched') {
+    throw httpError('Cannot cancel an order that is already dispatched or delivered.', 400);
+  }
+
+  const result = await query(
+    c.env,
+    `UPDATE orders
+     SET status = 'Cancelled', cancel_reason = $1
+     WHERE id = $2 AND user_id = $3
+     RETURNING *;`,
+    [reason, id, user.id]
+  );
+  return c.json({ success: true, message: 'Order cancelled successfully.', data: result.rows[0] });
+});
+
+app.delete('/api/v1/orders/:id', authenticateUser, async (c) => {
+  const id = c.req.param('id');
+  const user = c.get('user');
+
+  const check = await query(c.env, 'SELECT * FROM orders WHERE id = $1 AND user_id = $2;', [id, user.id]);
+  if (check.rows.length === 0) throw httpError('Order not found.', 404);
+
+  await query(c.env, 'DELETE FROM orders WHERE id = $1 AND user_id = $2;', [id, user.id]);
+  return c.json({ success: true, message: 'Order deleted successfully from history.' });
+});
+
 app.get('/api/v1/admin/orders', adminAuth, async (c) => {
   const result = await query(
     c.env,
-    `SELECT o.id, o.delivery_address, o.total_amount, o.payment_method, o.status, o.items, o.created_at,
+    `SELECT o.id, o.delivery_address, o.total_amount, o.payment_method, o.status, o.items, o.created_at, o.cancel_reason,
        u.name AS customer_name, u.email AS customer_email
      FROM orders o
      LEFT JOIN users u ON o.user_id = u.id
@@ -1058,6 +1095,7 @@ app.get('/api/v1/admin/orders', adminAuth, async (c) => {
         paymentMethod: row.payment_method,
         deliveryAddress: row.delivery_address,
         delivery_address: row.delivery_address,
+        cancel_reason: row.cancel_reason || '',
         items,
         created_at: row.created_at,
       };
@@ -1069,7 +1107,22 @@ app.put('/api/v1/admin/orders/:id', adminAuth, async (c) => {
   const body = await jsonBody(c);
   const status = normalizeOrderStatus(body.status);
   if (!ORDER_STATUSES.includes(status)) throw httpError('Invalid order status.', 400);
-  const result = await query(c.env, 'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *;', [status, c.req.param('id')]);
+
+  let result;
+  if (status === 'Cancelled' && body.cancel_reason) {
+    result = await query(
+      c.env,
+      'UPDATE orders SET status = $1, cancel_reason = $2 WHERE id = $3 RETURNING *;',
+      [status, body.cancel_reason, c.req.param('id')]
+    );
+  } else {
+    result = await query(
+      c.env,
+      'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *;',
+      [status, c.req.param('id')]
+    );
+  }
+
   if (result.rows.length === 0) throw httpError('Order not found.', 404);
   return c.json({ success: true, message: 'Order status updated successfully.', data: result.rows[0] });
 });

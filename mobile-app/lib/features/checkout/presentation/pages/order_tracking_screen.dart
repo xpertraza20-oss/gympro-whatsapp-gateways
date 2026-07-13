@@ -97,6 +97,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 _errorMessage = state.message;
               }
             });
+            _pollingTimer?.cancel(); // Cancel polling on error to prevent infinite reload spamming
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Error: ${state.message}'), backgroundColor: Colors.redAccent),
             );
