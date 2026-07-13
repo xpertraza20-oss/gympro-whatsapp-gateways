@@ -11,6 +11,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     on<FetchOrderHistoryEvent>(_onFetchOrderHistory);
     on<FetchOrderTrackingEvent>(_onFetchOrderTracking);
     on<CancelOrderEvent>(_onCancelOrder);
+    on<DeleteOrderEvent>(_onDeleteOrder);
   }
 
   Future<void> _onPlaceOrder(PlaceOrderEvent event, Emitter<OrderState> emit) async {
@@ -55,6 +56,19 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       emit(OrderCancelSuccess(
         orderId: event.orderId,
         message: res['message'] ?? 'Order cancelled successfully.',
+      ));
+    } catch (e) {
+      emit(OrderError(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteOrder(DeleteOrderEvent event, Emitter<OrderState> emit) async {
+    emit(OrderLoading());
+    try {
+      await orderRepository.deleteOrder(event.orderId);
+      emit(OrderDeleteSuccess(
+        orderId: event.orderId,
+        message: 'Order successfully removed from history.',
       ));
     } catch (e) {
       emit(OrderError(e.toString()));

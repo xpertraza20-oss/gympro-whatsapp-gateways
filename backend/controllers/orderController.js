@@ -284,5 +284,87 @@ module.exports = {
       console.error('Error in adminUpdateOrderStatus:', err);
       next(err);
     }
+  },
+
+  cancelOrder: async (req, res, next) => {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const userId = req.user.id;
+
+    try {
+      const checkRes = await pool.query(
+        'SELECT * FROM orders WHERE id = $1 AND user_id = $2;',
+        [parseInt(id, 10), userId]
+      );
+
+      if (checkRes.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order not found.'
+        });
+      }
+
+      const order = checkRes.rows[0];
+      const normalizedStatus = order.status ? order.status.toLowerCase() : '';
+      if (normalizedStatus !== 'pending' && normalizedStatus !== 'confirmed') {
+        return res.status(400).json({
+          success: false,
+          message: 'Only pending or confirmed orders can be cancelled.'
+        });
+      }
+
+      const updateQuery = `
+        UPDATE orders
+        SET status = 'Cancelled', cancel_reason = $1
+        WHERE id = $2 AND user_id = $3
+        RETURNING *;
+      `;
+      const result = await pool.query(updateQuery, [
+        reason || 'User requested cancellation',
+        parseInt(id, 10),
+        userId
+      ]);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Order cancelled successfully.',
+        data: result.rows[0]
+      });
+    } catch (err) {
+      console.error('Error in cancelOrder:', err);
+      next(err);
+    }
+  },
+
+  deleteOrder: async (req, res, next) => {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    try {
+      const checkRes = await pool.query(
+        'SELECT * FROM orders WHERE id = $1 AND user_id = $2;',
+        [parseInt(id, 10), userId]
+      );
+
+      if (checkRes.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order not found.'
+        });
+      }
+
+      await pool.query(
+        'DELETE FROM orders WHERE id = $1 AND user_id = $2;',
+        [parseInt(id, 10), userId]
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Order deleted successfully from history.'
+      });
+    } catch (err) {
+      console.error('Error in deleteOrder:', err);
+      next(err);
+    }
   }
 };

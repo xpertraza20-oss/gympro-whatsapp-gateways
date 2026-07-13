@@ -121,6 +121,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             );
             _fetchHistory();
           }
+          if (state is OrderDeleteSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: primaryColor,
+              ),
+            );
+            _fetchHistory();
+          }
         },
         child: BlocBuilder<OrderBloc, OrderState>(
           builder: (context, state) {
@@ -332,6 +341,40 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                         ),
                                         child: const Text('Cancel', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                    if (status.toLowerCase() == 'cancelled' || status.toLowerCase() == 'delivered' || status.toLowerCase() == 'completed') ...[
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (dialogCtx) => AlertDialog(
+                                              title: const Text('Delete Order History', style: TextStyle(fontWeight: FontWeight.bold)),
+                                              content: const Text('Are you sure you want to remove this order from your history? This action cannot be undone.'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(dialogCtx),
+                                                  child: Text('Cancel', style: TextStyle(color: Colors.grey.shade600)),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(dialogCtx);
+                                                    context.read<OrderBloc>().add(DeleteOrderEvent(orderId: orderId));
+                                                  },
+                                                  child: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: Colors.redAccent,
+                                          side: const BorderSide(color: Colors.redAccent),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        ),
+                                        child: const Text('Delete', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                                       ),
                                       const SizedBox(width: 8),
                                     ],
