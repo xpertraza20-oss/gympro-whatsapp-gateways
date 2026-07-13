@@ -45,7 +45,7 @@ class VegetableCardWidget extends StatelessWidget {
           children: [
             // Core Card Contents
             Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -56,20 +56,20 @@ class VegetableCardWidget extends StatelessWidget {
                       child: Hero(
                         tag: "product_image_${product.id}",
                         child: Container(
-                          height: 110,
+                          height: 80,
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.01),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(6),
                           child: CachedNetworkImage(
                             imageUrl: product.imageUrl,
                             fit: BoxFit.contain,
                             filterQuality: FilterQuality.high,
                             placeholder: (context, url) => Center(
                               child: SizedBox(
-                                width: 24,
-                                height: 24,
+                                width: 20,
+                                height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   color: primaryColor.withOpacity(0.5),
@@ -85,7 +85,7 @@ class VegetableCardWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
 
                   // Category tag
                   Text(
@@ -97,7 +97,7 @@ class VegetableCardWidget extends StatelessWidget {
                       letterSpacing: 0.8,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
 
                   // Product Title
                   Text(
@@ -106,7 +106,7 @@ class VegetableCardWidget extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Color(0xFF1E293B),
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -120,7 +120,7 @@ class VegetableCardWidget extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
 
                   // Pricing Layout
                   Row(
