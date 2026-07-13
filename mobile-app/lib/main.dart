@@ -278,4 +278,7 @@ class _MockOrderRepository implements OrderRepository {
 
   @override
   Future<Map<String, dynamic>> getOrderById(int id) async => {};
+
+  @override
+  Future<Map<String, dynamic>> cancelOrder(int id, String reason) async => {};
 }

@@ -30,4 +30,9 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<Map<String, dynamic>> getOrderById(int id) async {
     return await remoteDataSource.fetchOrderById(id);
   }
+
+  @override
+  Future<Map<String, dynamic>> cancelOrder(int id, String reason) async {
+    return await remoteDataSource.cancelOrder(id, reason);
+  }
 }

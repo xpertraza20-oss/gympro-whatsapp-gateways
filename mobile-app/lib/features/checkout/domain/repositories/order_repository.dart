@@ -9,4 +9,6 @@ abstract class OrderRepository {
   Future<List<dynamic>> getOrderHistory();
 
   Future<Map<String, dynamic>> getOrderById(int id);
+
+  Future<Map<String, dynamic>> cancelOrder(int id, String reason);
 }

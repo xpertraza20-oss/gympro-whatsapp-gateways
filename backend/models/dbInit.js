@@ -82,6 +82,19 @@ const initializeDatabase = async () => {
     await client.query(alterUsersAddEmail);
     console.log('Users table schema migration completed.');
 
+    // 2.1.1b Alter orders table to add cancel_reason column if not exists
+    const alterOrdersAddCancelReason = `
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='cancel_reason') THEN
+          ALTER TABLE orders ADD COLUMN cancel_reason TEXT;
+        END IF;
+      END
+      $$;
+    `;
+    await client.query(alterOrdersAddCancelReason);
+    console.log('Orders table cancel_reason migration completed.');
+
     // 2.1.2 Ensure the UNIQUE index on users.email exists
     // (ALTER TABLE ADD COLUMN doesn't add a constraint automatically on existing tables)
     await client.query(`
@@ -147,6 +160,7 @@ const initializeDatabase = async () => {
         total_amount DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
         payment_method VARCHAR(50) DEFAULT 'COD',
         status VARCHAR(50) DEFAULT 'Pending',
+        cancel_reason TEXT,
         items JSONB NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );

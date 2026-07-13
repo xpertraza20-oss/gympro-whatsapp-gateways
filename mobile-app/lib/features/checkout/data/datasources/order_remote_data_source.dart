@@ -11,6 +11,8 @@ abstract class OrderRemoteDataSource {
   Future<List<dynamic>> fetchOrderHistory();
 
   Future<Map<String, dynamic>> fetchOrderById(int id);
+
+  Future<Map<String, dynamic>> cancelOrder(int id, String reason);
 }
 
 class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
@@ -82,6 +84,27 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       }
     } catch (e) {
       print("[OrderRemoteDataSource] Fetch order by id failed: $e");
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> cancelOrder(int id, String reason) async {
+    try {
+      final response = await dio.put(
+        '/api/v1/orders/$id/cancel',
+        data: {'reason': reason},
+      );
+      if (response.statusCode == 200) {
+        return response.data['data'] ?? response.data;
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+        );
+      }
+    } catch (e) {
+      print("[OrderRemoteDataSource] Cancel order failed: $e");
       rethrow;
     }
   }

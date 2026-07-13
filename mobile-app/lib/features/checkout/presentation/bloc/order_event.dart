@@ -36,3 +36,13 @@ class FetchOrderTrackingEvent extends OrderEvent {
   @override
   List<Object?> get props => [orderId];
 }
+
+class CancelOrderEvent extends OrderEvent {
+  final int orderId;
+  final String reason;
+
+  const CancelOrderEvent({required this.orderId, required this.reason});
+
+  @override
+  List<Object?> get props => [orderId, reason];
+}

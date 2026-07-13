@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { 
-  ShoppingCart, 
-  Search, 
-  RefreshCw, 
-  Clock, 
-  CheckCircle, 
-  Truck, 
+import {
+  ShoppingCart,
+  Search,
+  RefreshCw,
+  Clock,
+  CheckCircle,
+  Truck,
   XCircle,
   Eye,
   AlertCircle,
@@ -36,6 +36,7 @@ interface Order {
   date: string;
   paymentMethod: string;
   deliveryAddress?: string;
+  cancelReason?: string;
   items?: OrderItemDetails[] | string;
 }
 
@@ -45,7 +46,7 @@ export default function OrdersTable() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Shipped' | 'Completed' | 'Cancelled'>('All');
-  
+
   // Modal details state
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -89,6 +90,7 @@ export default function OrdersTable() {
             date: order.date,
             paymentMethod: order.paymentMethod || 'COD',
             deliveryAddress: order.deliveryAddress || order.delivery_address || 'N/A',
+            cancelReason: order.cancelReason || order.cancel_reason || '',
             items: parsedItems
           };
         });
@@ -111,7 +113,7 @@ export default function OrdersTable() {
   // Update order status on backend
   const handleUpdateStatus = async (id: number, currentStatus: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation(); // Prevent opening modal details
-    
+
     const swal = getSwal();
     const result = await swal.fire({
       title: 'Update Order Status',
@@ -131,12 +133,40 @@ export default function OrdersTable() {
     });
 
     if (result.isConfirmed && result.value) {
+      let cancelReason = '';
+      if (result.value === 'Cancelled') {
+        const reasonResult = await swal.fire({
+          title: 'Cancellation Reason',
+          text: 'Please specify the reason for cancelling this order:',
+          input: 'text',
+          inputPlaceholder: 'e.g., Out of stock, Customer request...',
+          showCancelButton: true,
+          confirmButtonText: 'Submit Reason',
+          cancelButtonText: 'Go Back',
+          reverseButtons: true,
+          inputValidator: (value) => {
+            if (!value) {
+              return 'You must enter a reason!';
+            }
+            return null;
+          }
+        });
+
+        if (!reasonResult.isConfirmed) {
+          return;
+        }
+        cancelReason = reasonResult.value;
+      }
+
       setUpdatingId(id);
       try {
         const res = await fetch(`${getBackendUrl()}/api/v1/admin/orders/${id}`, {
           method: 'PUT',
           headers: getAdminHeaders(true),
-          body: JSON.stringify({ status: result.value })
+          body: JSON.stringify({ 
+            status: result.value,
+            cancel_reason: cancelReason 
+          })
         });
 
         const json = await res.json();
@@ -145,15 +175,15 @@ export default function OrdersTable() {
         }
 
         showToast('success', `Order status updated to ${result.value}`);
-        
+
         // Update local state
-        setOrders(prev => prev.map(order => 
-          order.id === id ? { ...order, status: result.value as any } : order
+        setOrders(prev => prev.map(order =>
+          order.id === id ? { ...order, status: result.value as any, cancelReason: cancelReason } : order
         ));
-        
+
         // Update details modal state if active
         if (selectedOrder && selectedOrder.id === id) {
-          setSelectedOrder(prev => prev ? { ...prev, status: result.value as any } : null);
+          setSelectedOrder(prev => prev ? { ...prev, status: result.value as any, cancelReason: cancelReason } : null);
         }
       } catch (err: any) {
         console.error('Failed to update status:', err);
@@ -183,11 +213,11 @@ export default function OrdersTable() {
 
   // Filter orders
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       String(order.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -237,11 +267,10 @@ export default function OrdersTable() {
             <button
               key={filter}
               onClick={() => setStatusFilter(filter)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
-                statusFilter === filter
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${statusFilter === filter
                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10'
                   : 'bg-bg-input text-text-secondary hover:bg-hover-panel hover:text-text-primary border border-border-card'
-              }`}
+                }`}
             >
               {filter}
             </button>
@@ -287,8 +316,8 @@ export default function OrdersTable() {
               <tbody className="divide-y divide-border-card/60 text-sm">
                 {filteredOrders.length > 0 ? (
                   filteredOrders.map((order) => (
-                    <tr 
-                      key={order.id} 
+                    <tr
+                      key={order.id}
                       onClick={() => {
                         setSelectedOrder(order);
                         setIsDetailsOpen(true);
@@ -407,6 +436,16 @@ export default function OrdersTable() {
                 </div>
               </div>
             </div>
+
+            {selectedOrder.status === 'Cancelled' && selectedOrder.cancelReason && (
+              <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+                <div className="font-bold flex items-center gap-1.5 uppercase text-xs tracking-wider mb-1">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Cancellation Reason</span>
+                </div>
+                <p className="font-medium">{selectedOrder.cancelReason}</p>
+              </div>
+            )}
 
             {/* Ordered Items List */}
             <div className="mt-5 space-y-3">

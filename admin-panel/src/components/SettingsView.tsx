@@ -385,7 +385,7 @@ export default function SettingsView({ theme, setTheme }: SettingsViewProps) {
         <div className="flex justify-end pt-2">
           <button
             type="submit"
-            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary px-6 py-3 text-sm font-bold text-white hover:brightness-110 active:scale-98 transition-all duration-200 cursor-pointer shadow-lg shadow-accent-primary/15"
+            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary px-6 py-3 text-sm font-bold text-white hover:brightness-110 hover:shadow-xl hover:shadow-accent-primary/25 active:scale-98 transition-all duration-300 cursor-pointer shadow-lg shadow-accent-primary/15"
           >
             <Save className="h-4.5 w-4.5" />
             Save Store Configuration

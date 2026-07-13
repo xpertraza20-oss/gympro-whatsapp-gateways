@@ -107,7 +107,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   crossAxisCount: 2,
                   crossAxisSpacing: 8,
                   mainAxisSpacing: 8,
-                  mainAxisExtent: 240,
+                  mainAxisExtent: 250,
                 ),
                 itemBuilder: (context, index) {
                   return VegetableCardWidget(

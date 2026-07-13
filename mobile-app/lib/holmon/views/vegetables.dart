@@ -109,7 +109,7 @@ class _VegetablesScreenState extends State<VegetablesScreen> {
                             crossAxisCount: 2,
                             crossAxisSpacing: 4,
                             mainAxisSpacing: 4,
-                            mainAxisExtent: 240,
+                            mainAxisExtent: 250,
                           ),
                           itemBuilder: (context, index) {
                             if (index < productList.length) {

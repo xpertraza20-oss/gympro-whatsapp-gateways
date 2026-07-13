@@ -131,7 +131,7 @@ class _CategoriesState extends State<Categories>
                             crossAxisCount: 2,
                             crossAxisSpacing: 8,
                             mainAxisSpacing: 8,
-                            mainAxisExtent: 240,
+                            mainAxisExtent: 250,
                           ),
                           itemCount: productList.length,
                           itemBuilder: (context, index) {

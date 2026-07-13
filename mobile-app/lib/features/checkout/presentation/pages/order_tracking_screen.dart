@@ -54,7 +54,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF006E2F);
+    final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -67,7 +67,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       body: BlocBuilder<OrderBloc, OrderState>(
         builder: (context, state) {
           if (state is OrderLoading && state is! OrderTrackingLoaded) {
-            return const Center(child: CircularProgressIndicator(color: primaryColor));
+            return Center(child: CircularProgressIndicator(color: primaryColor));
           }
 
           if (state is OrderError) {
@@ -147,7 +147,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             const Text('Amount to Pay', style: TextStyle(color: Colors.grey, fontSize: 14)),
                             Text(
                               'Rs. ${totalAmount.toStringAsFixed(2)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: primaryColor),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: primaryColor),
                             ),
                           ],
                         ),
@@ -233,7 +233,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }) {
     final isDone = activeStep >= index;
     final isCurrent = activeStep == index;
-    const primaryColor = Color(0xFF006E2F);
+    final primaryColor = Theme.of(context).primaryColor;
     final color = isDone 
         ? primaryColor 
         : Colors.grey.shade300;
