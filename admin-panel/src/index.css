@@ -10,28 +10,243 @@
   --color-bg-input: var(--bg-input);
   --color-border-input: var(--border-input);
   --color-hover-panel: var(--hover-panel);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
 }
 
 :root {
-  --bg-body: #020617;
-  --bg-panel: #0f172a;
-  --border-card: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --bg-input: #020617;
-  --border-input: #1e293b;
-  --hover-panel: #1e293b;
+  /* Default Theme: Frosted Opal (Light Default) */
+  --bg-body: #f8fafc;
+  --bg-panel: rgba(255, 255, 255, 0.65);
+  --border-card: rgba(15, 23, 42, 0.06);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --bg-input: #ffffff;
+  --border-input: rgba(15, 23, 42, 0.08);
+  --hover-panel: rgba(15, 23, 42, 0.04);
+  --accent-primary: #10b981; /* Emerald */
+  --accent-secondary: #059669;
+  
+  --glass-panel-bg: rgba(255, 255, 255, 0.7);
+  --glass-panel-border: rgba(15, 23, 42, 0.06);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(15, 23, 42, 0.04);
 }
 
-.light {
+/* 1. Frosted Opal */
+.theme-light-default {
   --bg-body: #f8fafc;
-  --bg-panel: #ffffff;
-  --border-card: #e2e8f0;
+  --bg-panel: rgba(255, 255, 255, 0.65);
+  --border-card: rgba(15, 23, 42, 0.06);
   --text-primary: #0f172a;
-  --text-secondary: #64748b;
+  --text-secondary: #475569;
   --bg-input: #ffffff;
-  --border-input: #cbd5e1;
-  --hover-panel: #f1f5f9;
+  --border-input: rgba(15, 23, 42, 0.08);
+  --hover-panel: rgba(15, 23, 42, 0.04);
+  --accent-primary: #10b981;
+  --accent-secondary: #059669;
+  --glass-panel-bg: rgba(255, 255, 255, 0.7);
+  --glass-panel-border: rgba(15, 23, 42, 0.06);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(15, 23, 42, 0.04);
+}
+
+/* 2. Nordic Frost (Light Ice) */
+.theme-nordic-frost {
+  --bg-body: #f0f7ff;
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --border-card: rgba(2, 132, 199, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --bg-input: #ffffff;
+  --border-input: rgba(2, 132, 199, 0.1);
+  --hover-panel: rgba(2, 132, 199, 0.04);
+  --accent-primary: #0284c7;
+  --accent-secondary: #0369a1;
+  --glass-panel-bg: rgba(255, 255, 255, 0.75);
+  --glass-panel-border: rgba(2, 132, 199, 0.08);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(2, 132, 199, 0.05);
+}
+
+/* 3. Emerald Glass */
+.theme-emerald-glass {
+  --bg-body: #f0fdf4;
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --border-card: rgba(5, 150, 105, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #1e293b;
+  --bg-input: #ffffff;
+  --border-input: rgba(5, 150, 105, 0.1);
+  --hover-panel: rgba(5, 150, 105, 0.04);
+  --accent-primary: #059669;
+  --accent-secondary: #047857;
+  --glass-panel-bg: rgba(255, 255, 255, 0.75);
+  --glass-panel-border: rgba(5, 150, 105, 0.08);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(5, 150, 105, 0.05);
+}
+
+/* 4. Midnight Violet */
+.theme-midnight-violet {
+  --bg-body: #f5f3ff;
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --border-card: rgba(124, 58, 237, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --bg-input: #ffffff;
+  --border-input: rgba(124, 58, 237, 0.1);
+  --hover-panel: rgba(124, 58, 237, 0.04);
+  --accent-primary: #7c3aed;
+  --accent-secondary: #6d28d9;
+  --glass-panel-bg: rgba(255, 255, 255, 0.75);
+  --glass-panel-border: rgba(124, 58, 237, 0.08);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(124, 58, 237, 0.05);
+}
+
+/* 5. Rose Sakura */
+.theme-rose-sakura {
+  --bg-body: #fff1f2;
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --border-card: rgba(225, 29, 72, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --bg-input: #ffffff;
+  --border-input: rgba(225, 29, 72, 0.1);
+  --hover-panel: rgba(225, 29, 72, 0.04);
+  --accent-primary: #e11d48;
+  --accent-secondary: #be123c;
+  --glass-panel-bg: rgba(255, 255, 255, 0.75);
+  --glass-panel-border: rgba(225, 29, 72, 0.08);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(225, 29, 72, 0.05);
+}
+
+/* 6. Cyberpunk 2077 (Light Synthwave) */
+.theme-cyberpunk {
+  --bg-body: #faf5ff;
+  --bg-panel: rgba(255, 255, 255, 0.75);
+  --border-card: rgba(219, 39, 119, 0.1);
+  --text-primary: #1e0b36;
+  --text-secondary: #4b2354;
+  --bg-input: #ffffff;
+  --border-input: rgba(219, 39, 119, 0.15);
+  --hover-panel: rgba(219, 39, 119, 0.05);
+  --accent-primary: #db2777; /* Neon Pink */
+  --accent-secondary: #0891b2; /* Neon Cyan */
+  --glass-panel-bg: rgba(255, 255, 255, 0.75);
+  --glass-panel-border: rgba(219, 39, 119, 0.1);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(219, 39, 119, 0.06);
+}
+
+/* 7. Sunset Gold */
+.theme-sunset-gold {
+  --bg-body: #fffbeb;
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --border-card: rgba(217, 119, 6, 0.08);
+  --text-primary: #1e1b4b;
+  --text-secondary: #451a03;
+  --bg-input: #ffffff;
+  --border-input: rgba(217, 119, 6, 0.1);
+  --hover-panel: rgba(217, 119, 6, 0.04);
+  --accent-primary: #d97706;
+  --accent-secondary: #b45309;
+  --glass-panel-bg: rgba(255, 255, 255, 0.75);
+  --glass-panel-border: rgba(217, 119, 6, 0.08);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(217, 119, 6, 0.05);
+}
+
+/* 8. Ocean Abyss (Light Pearl) */
+.theme-ocean-abreeze {
+  --bg-body: #f0fdfa;
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --border-card: rgba(13, 148, 136, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #1e293b;
+  --bg-input: #ffffff;
+  --border-input: rgba(13, 148, 136, 0.1);
+  --hover-panel: rgba(13, 148, 136, 0.04);
+  --accent-primary: #0d9488;
+  --accent-secondary: #0f766e;
+  --glass-panel-bg: rgba(255, 255, 255, 0.75);
+  --glass-panel-border: rgba(13, 148, 136, 0.08);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(13, 148, 136, 0.05);
+}
+
+/* 9. Crimson Phantom */
+.theme-crimson-phantom {
+  --bg-body: #fef2f2;
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --border-card: rgba(220, 38, 38, 0.08);
+  --text-primary: #1e0505;
+  --text-secondary: #491010;
+  --bg-input: #ffffff;
+  --border-input: rgba(220, 38, 38, 0.1);
+  --hover-panel: rgba(220, 38, 38, 0.04);
+  --accent-primary: #dc2626;
+  --accent-secondary: #b91c1c;
+  --glass-panel-bg: rgba(255, 255, 255, 0.75);
+  --glass-panel-border: rgba(220, 38, 38, 0.08);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(220, 38, 38, 0.05);
+}
+
+/* 10. Forest Moss */
+.theme-forest-moss {
+  --bg-body: #f7fee7;
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --border-card: rgba(101, 163, 13, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #3f6212;
+  --bg-input: #ffffff;
+  --border-input: rgba(101, 163, 13, 0.1);
+  --hover-panel: rgba(101, 163, 13, 0.04);
+  --accent-primary: #65a30d;
+  --accent-secondary: #4d7c0f;
+  --glass-panel-bg: rgba(255, 255, 255, 0.75);
+  --glass-panel-border: rgba(101, 163, 13, 0.08);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(101, 163, 13, 0.05);
+}
+
+/* 11. Minimal Slate */
+.theme-dark-slate {
+  --bg-body: #f1f5f9;
+  --bg-panel: rgba(255, 255, 255, 0.75);
+  --border-card: rgba(51, 65, 85, 0.1);
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --bg-input: #ffffff;
+  --border-input: rgba(51, 65, 85, 0.12);
+  --hover-panel: rgba(51, 65, 85, 0.04);
+  --accent-primary: #334155;
+  --accent-secondary: #1e293b;
+  --glass-panel-bg: rgba(255, 255, 255, 0.8);
+  --glass-panel-border: rgba(51, 65, 85, 0.1);
+  --glass-card-bg: rgba(255, 255, 255, 0.88);
+  --glass-card-border: rgba(51, 65, 85, 0.06);
+}
+
+/* 12. Retro Amber */
+.theme-retro-amber {
+  --bg-body: #fafaf9;
+  --bg-panel: rgba(255, 255, 255, 0.7);
+  --border-card: rgba(180, 83, 9, 0.08);
+  --text-primary: #1c1917;
+  --text-secondary: #44403c;
+  --bg-input: #ffffff;
+  --border-input: rgba(180, 83, 9, 0.1);
+  --hover-panel: rgba(180, 83, 9, 0.04);
+  --accent-primary: #b45309;
+  --accent-secondary: #78350f;
+  --glass-panel-bg: rgba(255, 255, 255, 0.75);
+  --glass-panel-border: rgba(180, 83, 9, 0.08);
+  --glass-card-bg: rgba(255, 255, 255, 0.85);
+  --glass-card-border: rgba(180, 83, 9, 0.05);
 }
 
 /* Smooth scrolling and transitions */
@@ -47,14 +262,92 @@ html, body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a; /* Slate 900 */
+  background: var(--bg-body);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155; /* Slate 700 */
+  background: var(--border-input);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569; /* Slate 600 */
+  background: var(--text-secondary);
 }
+
+/* 🧪 Antigravity Glassmorphism & Depth System */
+.glass-panel {
+  background: var(--glass-panel-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-panel-border);
+}
+
+.glass-card {
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-card-border);
+}
+
+/* Weightless floating card with smooth cubic-bezier lift on hover */
+.float-card {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+  will-change: transform;
+}
+
+.float-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  border-color: rgba(16, 185, 129, 0.3); /* Subtle green border on hover */
+}
+
+.light .float-card:hover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* Mesh Glow Background Orbs for Spatial Depth */
+.mesh-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+  will-change: filter;
+}
+
+.light .mesh-glow-orb {
+  opacity: 0.08;
+  filter: blur(60px);
+}
+
+/* Premium Neon/Glow status indicators */
+.status-pill-green {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.05);
+}
+
+.status-pill-amber {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.05);
+}
+
+.status-pill-red {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.05);
+}
+
+.status-pill-blue {
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.05);
+}
+

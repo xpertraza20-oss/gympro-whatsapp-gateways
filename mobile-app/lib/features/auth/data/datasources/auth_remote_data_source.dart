@@ -16,11 +16,33 @@ abstract class AuthRemoteDataSource {
   
   Future<Map<String, dynamic>> verifyOtp({required String email, required String otp});
   Future<void> requestOtp(String phoneNumber); // legacy
+  Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    required String phone,
+    required String location,
+    String? password,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final Dio dio;
   AuthRemoteDataSourceImpl({required this.dio});
+
+  String _mapDioError(DioException e) {
+    if (e.type == DioExceptionType.connectionError) {
+      return 'Connection Error: Cannot resolve server address. Please verify your internet connection or backend URL in settings.';
+    } else if (e.type == DioExceptionType.connectionTimeout ||
+               e.type == DioExceptionType.receiveTimeout ||
+               e.type == DioExceptionType.sendTimeout) {
+      return 'Timeout Error: Server took too long to respond. Please try again.';
+    } else if (e.response != null && e.response?.data != null) {
+      final data = e.response?.data;
+      if (data is Map && data.containsKey('message')) {
+        return data['message'].toString();
+      }
+    }
+    return e.message ?? 'An unexpected network error occurred';
+  }
 
   @override
   Future<Map<String, dynamic>> signup({
@@ -39,14 +61,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'password': password,
       });
       if (response.data?['success'] == true) {
-        return {
-          'token': response.data['token'],
-          'user': response.data['user'],
-        };
+        return Map<String, dynamic>.from(response.data as Map);
       }
       throw Exception(response.data?['message'] ?? 'Signup failed');
     } on DioException catch (e) {
-      throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
+      throw Exception(_mapDioError(e));
     }
   }
 
@@ -61,14 +80,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'password': password,
       });
       if (response.data?['success'] == true) {
-        return {
-          'token': response.data['token'],
-          'user': response.data['user'],
-        };
+        return Map<String, dynamic>.from(response.data as Map);
       }
       throw Exception(response.data?['message'] ?? 'Login failed');
     } on DioException catch (e) {
-      throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
+      throw Exception(_mapDioError(e));
     }
   }
 
@@ -87,7 +103,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
       throw Exception(response.data?['message'] ?? 'OTP verification failed');
     } on DioException catch (e) {
-      throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
+      throw Exception(_mapDioError(e));
     }
   }
 
@@ -96,7 +112,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       await dio.post('/api/v1/auth/request-otp', data: {'phoneNumber': phoneNumber});
     } on DioException catch (e) {
-      throw Exception(e.response?.data?['message'] ?? e.message ?? 'Network error');
+      throw Exception(_mapDioError(e));
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    required String phone,
+    required String location,
+    String? password,
+  }) async {
+    try {
+      final response = await dio.put('/api/v1/auth/profile', data: {
+        'name': name,
+        'phone': phone,
+        'location': location,
+        if (password != null && password.isNotEmpty) 'password': password,
+      });
+      if (response.data?['success'] == true) {
+        return response.data;
+      }
+      throw Exception(response.data?['message'] ?? 'Profile update failed');
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(e));
     }
   }
 }

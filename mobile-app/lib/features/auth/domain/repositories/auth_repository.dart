@@ -24,4 +24,12 @@ abstract class AuthRepository {
 
   // Legacy phone support
   Future<void> requestOtp(String phoneNumber);
+
+  /// Update profile details in database
+  Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    required String phone,
+    required String location,
+    String? password,
+  });
 }

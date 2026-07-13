@@ -7,7 +7,10 @@ class DioClient {
   DioClient({String? baseUrl})
       : dio = Dio(
           BaseOptions(
-            baseUrl: baseUrl ?? const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:5000'),
+            baseUrl: baseUrl ?? const String.fromEnvironment(
+              'API_BASE_URL',
+              defaultValue: 'https://grocery-backend.xpertraza13.workers.dev',
+            ),
             connectTimeout: const Duration(seconds: 60),
             receiveTimeout: const Duration(seconds: 60),
             responseType: ResponseType.json,

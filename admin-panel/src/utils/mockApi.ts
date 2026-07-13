@@ -1,4 +1,4 @@
-import { getBackendUrl } from './config';
+import { getAdminHeaders, getBackendUrl } from './config';
 
 export interface Product {
   id: string;
@@ -97,106 +97,123 @@ async function ensureCategoryMap() {
 }
 
 export async function runMockUploadPipeline(
-  file: File,
-  metadata: Omit<Product, 'id' | 'image_url'>,
+  file: File | null,
+  metadata: Omit<Product, 'id' | 'image_url'> & { image_url?: string },
   onUpdate: (event: PipelineProgressEvent) => void
 ): Promise<Product> {
   const BACKEND_BASE = getBackendUrl();
-  const AUTH_TOKEN = 'admin-secret-token';
-  const fileExtension = '.webp';
-  const cleanFilename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}${fileExtension}`;
+  let finalImageUrl = metadata.image_url || '';
+  let useFallbackUrl = false;
 
   await ensureCategoryMap();
   const categoryId = categoryMap[metadata.category] || FALLBACK_CATEGORY_MAP[metadata.category] || null;
 
-  // STEP 1: Fetch Presigned URL
-  onUpdate({
-    stepId: 'presigned-url',
-    status: 'running',
-    message: `POST ${BACKEND_BASE}/api/v1/admin/products/presign\nPayload: { filename: "${cleanFilename}", contentType: "image/webp" }`
-  });
-  await delay(600); // Small delay for visual pipeline tracing
+  if (file) {
+    const fileExtension = '.webp';
+    const cleanFilename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}${fileExtension}`;
 
-  let presignedUrl = '';
-  let downloadUrl = '';
-  try {
-    const presignRes = await fetch(`${BACKEND_BASE}/api/v1/admin/products/presign`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${AUTH_TOKEN}`
-      },
-      body: JSON.stringify({
-        filename: cleanFilename,
-        contentType: 'image/webp'
-      })
+    // STEP 1: Fetch Presigned URL
+    onUpdate({
+      stepId: 'presigned-url',
+      status: 'running',
+      message: `POST ${BACKEND_BASE}/api/v1/admin/products/presign\nPayload: { filename: "${cleanFilename}", contentType: "image/webp" }`
     });
+    await delay(600); // Small delay for visual pipeline tracing
 
-    if (!presignRes.ok) {
-      throw new Error(`Presign API error: Status ${presignRes.status}`);
+    let presignedUrl = '';
+    let downloadUrl = '';
+    try {
+      const presignRes = await fetch(`${BACKEND_BASE}/api/v1/admin/products/presign`, {
+        method: 'POST',
+        headers: {
+          ...getAdminHeaders(true)
+        },
+        body: JSON.stringify({
+          filename: cleanFilename,
+          contentType: 'image/webp'
+        })
+      });
+
+      if (!presignRes.ok) {
+        throw new Error(`Presign API error: Status ${presignRes.status}`);
+      }
+
+      const presignJson = await presignRes.json();
+      if (!presignJson.success || !presignJson.data) {
+        throw new Error(presignJson.message || 'Presign failed');
+      }
+
+      presignedUrl = presignJson.data.uploadUrl;
+      downloadUrl = presignJson.data.downloadUrl;
+
+      onUpdate({
+        stepId: 'presigned-url',
+        status: 'success',
+        message: `Successfully obtained presigned URL.`,
+        data: { presignedUrl, downloadUrl }
+      });
+    } catch (err: any) {
+      onUpdate({
+        stepId: 'presigned-url',
+        status: 'failed',
+        message: `Presigned URL generation failed: ${err.message}`
+      });
+      throw err;
     }
 
-    const presignJson = await presignRes.json();
-    if (!presignJson.success || !presignJson.data) {
-      throw new Error(presignJson.message || 'Presign failed');
+    // STEP 2: Upload raw file directly to R2
+    onUpdate({
+      stepId: 'r2-upload',
+      status: 'running',
+      message: `PUT ${presignedUrl.split('?')[0]} (Size: ${(file.size / 1024).toFixed(2)} KB)`
+    });
+    await delay(600);
+
+    try {
+      const uploadRes = await fetch(presignedUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'image/webp'
+        },
+        body: file
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error(`R2 PUT error: Status ${uploadRes.status}`);
+      }
+
+      finalImageUrl = downloadUrl;
+      onUpdate({
+        stepId: 'r2-upload',
+        status: 'success',
+        message: `File uploaded successfully. Direct URL: ${downloadUrl}`,
+        data: { r2Url: downloadUrl }
+      });
+    } catch (err: any) {
+      console.warn("R2 Direct upload failed. Falling back to stable category image for developer testing.", err);
+      useFallbackUrl = true;
+      finalImageUrl = CATEGORY_FALLBACK_IMAGES[metadata.category] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400';
+      onUpdate({
+        stepId: 'r2-upload',
+        status: 'success',
+        message: 'Upload storage is not configured yet. Falling back to a stable category placeholder image.',
+        data: { r2Url: finalImageUrl }
+      });
     }
-
-    presignedUrl = presignJson.data.uploadUrl;
-    downloadUrl = presignJson.data.downloadUrl;
-
+  } else {
+    // If no file but has image_url
+    if (!finalImageUrl) {
+      finalImageUrl = CATEGORY_FALLBACK_IMAGES[metadata.category] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400';
+    }
     onUpdate({
       stepId: 'presigned-url',
       status: 'success',
-      message: `Successfully obtained presigned URL.`,
-      data: { presignedUrl, downloadUrl }
+      message: 'Using direct image URL. Skipping R2 presign.',
     });
-  } catch (err: any) {
-    onUpdate({
-      stepId: 'presigned-url',
-      status: 'failed',
-      message: `Presigned URL generation failed: ${err.message}`
-    });
-    throw err;
-  }
-
-  // STEP 2: Upload raw file directly to R2
-  onUpdate({
-    stepId: 'r2-upload',
-    status: 'running',
-    message: `PUT ${presignedUrl.split('?')[0]} (Size: ${(file.size / 1024).toFixed(2)} KB)`
-  });
-  await delay(600);
-
-  let finalImageUrl = downloadUrl;
-  let useFallbackUrl = false;
-  try {
-    const uploadRes = await fetch(presignedUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'image/webp'
-      },
-      body: file
-    });
-
-    if (!uploadRes.ok) {
-      throw new Error(`R2 PUT error: Status ${uploadRes.status}`);
-    }
-
     onUpdate({
       stepId: 'r2-upload',
       status: 'success',
-      message: `File uploaded to Cloudflare R2 successfully. Direct URL: ${downloadUrl}`,
-      data: { r2Url: downloadUrl }
-    });
-  } catch (err: any) {
-    console.warn("R2 Direct upload failed. Falling back to stable category image for developer testing.", err);
-    useFallbackUrl = true;
-    finalImageUrl = CATEGORY_FALLBACK_IMAGES[metadata.category] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400';
-    onUpdate({
-      stepId: 'r2-upload',
-      status: 'success',
-      message: `⚠️ R2 PUT failed (Using mock credentials). Falling back to stable category placeholder image.`,
-      data: { r2Url: finalImageUrl }
+      message: `Using image: ${finalImageUrl}`,
     });
   }
 
@@ -222,8 +239,7 @@ export async function runMockUploadPipeline(
     const createRes = await fetch(`${BACKEND_BASE}/api/v1/admin/products`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${AUTH_TOKEN}`
+        ...getAdminHeaders(true)
       },
       body: JSON.stringify(backendPayload)
     });
@@ -267,6 +283,187 @@ export async function runMockUploadPipeline(
       stepId: 'create-product',
       status: 'failed',
       message: `Failed to save product in Neon DB: ${err.message}`
+    });
+    throw err;
+  }
+}
+
+export async function runMockUpdatePipeline(
+  id: string,
+  file: File | null,
+  metadata: Omit<Product, 'id' | 'image_url'> & { image_url: string },
+  onUpdate: (event: PipelineProgressEvent) => void
+): Promise<Product> {
+  const BACKEND_BASE = getBackendUrl();
+  let finalImageUrl = metadata.image_url;
+
+  await ensureCategoryMap();
+  const categoryId = categoryMap[metadata.category] || FALLBACK_CATEGORY_MAP[metadata.category] || null;
+
+  if (file) {
+    const fileExtension = '.webp';
+    const cleanFilename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}${fileExtension}`;
+
+    // STEP 1: Fetch Presigned URL
+    onUpdate({
+      stepId: 'presigned-url',
+      status: 'running',
+      message: `POST ${BACKEND_BASE}/api/v1/admin/products/presign\nPayload: { filename: "${cleanFilename}", contentType: "image/webp" }`
+    });
+    await delay(600);
+
+    let presignedUrl = '';
+    let downloadUrl = '';
+    try {
+      const presignRes = await fetch(`${BACKEND_BASE}/api/v1/admin/products/presign`, {
+        method: 'POST',
+        headers: {
+          ...getAdminHeaders(true)
+        },
+        body: JSON.stringify({
+          filename: cleanFilename,
+          contentType: 'image/webp'
+        })
+      });
+
+      if (!presignRes.ok) throw new Error(`Presign API error: Status ${presignRes.status}`);
+      const presignJson = await presignRes.json();
+      if (!presignJson.success || !presignJson.data) throw new Error(presignJson.message || 'Presign failed');
+
+      presignedUrl = presignJson.data.uploadUrl;
+      downloadUrl = presignJson.data.downloadUrl;
+
+      onUpdate({
+        stepId: 'presigned-url',
+        status: 'success',
+        message: `Successfully obtained presigned URL.`,
+        data: { presignedUrl, downloadUrl }
+      });
+    } catch (err: any) {
+      onUpdate({
+        stepId: 'presigned-url',
+        status: 'failed',
+        message: `Presigned URL generation failed: ${err.message}`
+      });
+      throw err;
+    }
+
+    // STEP 2: Upload raw file directly to R2
+    onUpdate({
+      stepId: 'r2-upload',
+      status: 'running',
+      message: `PUT ${presignedUrl.split('?')[0]} (Size: ${(file.size / 1024).toFixed(2)} KB)`
+    });
+    await delay(600);
+
+    try {
+      const uploadRes = await fetch(presignedUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'image/webp'
+        },
+        body: file
+      });
+
+      if (!uploadRes.ok) throw new Error(`R2 PUT error: Status ${uploadRes.status}`);
+
+      finalImageUrl = downloadUrl;
+      onUpdate({
+        stepId: 'r2-upload',
+        status: 'success',
+        message: `File uploaded successfully. Direct URL: ${downloadUrl}`,
+        data: { r2Url: downloadUrl }
+      });
+    } catch (err: any) {
+      console.warn("R2 Direct upload failed. Falling back to category image.", err);
+      finalImageUrl = CATEGORY_FALLBACK_IMAGES[metadata.category] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400';
+      onUpdate({
+        stepId: 'r2-upload',
+        status: 'success',
+        message: 'Upload storage is not configured yet. Falling back to a placeholder image.',
+        data: { r2Url: finalImageUrl }
+      });
+    }
+  } else {
+    // If no new file, we bypass R2 upload steps
+    onUpdate({
+      stepId: 'presigned-url',
+      status: 'success',
+      message: 'Keeping existing product image. Skipping R2 upload.',
+    });
+    onUpdate({
+      stepId: 'r2-upload',
+      status: 'success',
+      message: `Using image: ${finalImageUrl}`,
+    });
+  }
+
+  // STEP 3: PUT the entire metadata payload to the products endpoint
+  const backendPayload = {
+    category_id: categoryId,
+    title: metadata.title,
+    price: metadata.price,
+    unit: metadata.unit,
+    stock_quantity: metadata.stock,
+    image_url: finalImageUrl,
+    is_available: true
+  };
+
+  onUpdate({
+    stepId: 'create-product',
+    status: 'running',
+    message: `PUT ${BACKEND_BASE}/api/v1/admin/products/${id}\nPayload: ${JSON.stringify(backendPayload, null, 2)}`
+  });
+  await delay(600);
+
+  try {
+    const updateRes = await fetch(`${BACKEND_BASE}/api/v1/admin/products/${id}`, {
+      method: 'PUT',
+      headers: {
+        ...getAdminHeaders(true)
+      },
+      body: JSON.stringify(backendPayload)
+    });
+
+    if (!updateRes.ok) throw new Error(`Update Product API error: Status ${updateRes.status}`);
+    const updateJson = await updateRes.json();
+    if (!updateJson.success || !updateJson.data) throw new Error(updateJson.message || 'Product update failed');
+
+    const backendProduct = updateJson.data;
+
+    const mappedProduct: Product = {
+      id: String(backendProduct.id),
+      title: backendProduct.title,
+      price: parseFloat(backendProduct.price),
+      unit: backendProduct.unit || '',
+      category: metadata.category,
+      image_url: backendProduct.image_url || '',
+      stock: backendProduct.stock_quantity ?? 0
+    };
+
+    // Update in local cache
+    const products = fetchProducts();
+    const index = products.findIndex(p => p.id === id);
+    if (index !== -1) {
+      products[index] = mappedProduct;
+    } else {
+      products.unshift(mappedProduct);
+    }
+    saveProducts(products);
+
+    onUpdate({
+      stepId: 'create-product',
+      status: 'success',
+      message: `Product successfully updated in Neon DB. ID: ${mappedProduct.id}`,
+      data: mappedProduct
+    });
+
+    return mappedProduct;
+  } catch (err: any) {
+    onUpdate({
+      stepId: 'create-product',
+      status: 'failed',
+      message: `Failed to update product in Neon DB: ${err.message}`
     });
     throw err;
   }

@@ -1,5 +1,6 @@
 'use strict';
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 /**
  * Generates a secure numeric OTP string of a given length.
@@ -9,7 +10,7 @@ const nodemailer = require('nodemailer');
 const generateOtp = (length = 6) => {
   const min = Math.pow(10, length - 1);
   const max = Math.pow(10, length) - 1;
-  return String(Math.floor(min + Math.random() * (max - min + 1)));
+  return String(crypto.randomInt(min, max + 1));
 };
 
 /**

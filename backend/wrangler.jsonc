@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "grocery-backend",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-07-11",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "AUTO_INIT_SCHEMA": "false",
+    "PUBLIC_WORKER_URL": "https://grocery-backend.xpertraza13.workers.dev",
+    "ALLOWED_ORIGINS": "https://grocery-admin-644.pages.dev"
+  }
+}

@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "worker:dev": "wrangler dev",
+    "worker:deploy": "wrangler deploy --minify",
+    "worker:dry-run": "wrangler deploy --dry-run",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,16 +18,19 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1080.0",
     "@aws-sdk/s3-request-presigner": "^3.1080.0",
+    "@neondatabase/serverless": "^1.1.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "helmet": "^8.2.0",
+    "hono": "^4.12.29",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
     "nodemailer": "^9.0.3",
     "pg": "^8.22.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "wrangler": "^4.110.0"
   }
 }

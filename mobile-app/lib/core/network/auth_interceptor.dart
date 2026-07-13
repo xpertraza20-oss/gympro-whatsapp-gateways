@@ -29,6 +29,9 @@ class AuthInterceptor extends Interceptor {
     // Standard headers
     options.headers['Accept'] = 'application/json';
     options.headers['Content-Type'] = 'application/json';
+    options.headers['bypass-tunnel-reminder'] = 'true';
+    options.headers['ngrok-skip-browser-warning'] = 'true';
+    options.headers['bypass-cache'] = 'true';
 
     return handler.next(options);
   }

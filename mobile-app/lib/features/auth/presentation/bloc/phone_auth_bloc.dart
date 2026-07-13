@@ -114,7 +114,11 @@ class PhoneAuthBloc extends Bloc<AuthEvent, AuthState> {
         location: event.location,
         password: event.password,
       );
-      emit(AuthAuthenticated(result['token'] as String));
+      if (result['requiresOtp'] == true) {
+        emit(AuthOtpSent(email: result['email'] as String));
+      } else {
+        emit(AuthAuthenticated(result['token'] as String));
+      }
     } catch (e) {
       emit(AuthError(e.toString().replaceAll('Exception: ', '')));
     }
@@ -127,7 +131,11 @@ class PhoneAuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
       );
-      emit(AuthAuthenticated(result['token'] as String));
+      if (result['requiresOtp'] == true) {
+        emit(AuthOtpSent(email: result['email'] as String));
+      } else {
+        emit(AuthAuthenticated(result['token'] as String));
+      }
     } catch (e) {
       emit(AuthError(e.toString().replaceAll('Exception: ', '')));
     }

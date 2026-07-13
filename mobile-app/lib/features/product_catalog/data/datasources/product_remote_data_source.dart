@@ -49,7 +49,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       }
     } catch (e) {
       // Return highly structured mock local products on network failure so the UI works instantly
-      print("[RemoteDataSource] Fetch failed or offline, returning mock page: $page");
+      print("[RemoteDataSource] Fetch failed or offline, error: $e, returning mock page: $page");
       await Future.delayed(const Duration(milliseconds: 800)); // Simulate latency
       return _generateMockProducts(page, limit);
     }
@@ -181,7 +181,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         );
       }
     } catch (e) {
-      print("[RemoteDataSource] Categories fetch failed, returning empty");
+      print("[RemoteDataSource] Categories fetch failed, error: $e, returning empty");
       return [];
     }
   }

@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import ProductTable from './components/ProductTable';
 import AddProductModal from './components/AddProductModal';
+import EditProductModal from './components/EditProductModal';
 import CategoryTable from './components/CategoryTable';
 import OrdersTable from './components/OrdersTable';
 import CustomerTable from './components/CustomerTable';
@@ -10,7 +11,7 @@ import AnalyticsView from './components/AnalyticsView';
 import SettingsView from './components/SettingsView';
 import { saveProducts, type Product } from './utils/mockApi';
 import { getSwal, showToast } from './utils/alerts';
-import { getBackendUrl, formatPrice } from './utils/config';
+import { getAdminHeaders, getBackendUrl, formatPrice } from './utils/config';
 import { 
   ShoppingBag, 
   TrendingUp, 
@@ -26,25 +27,40 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // Theme state: defaults to 'light'
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    return (localStorage.getItem('admin_theme') as 'dark' | 'light') || 'light';
+  const handleProductUpdated = (updatedProduct: Product) => {
+    setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+  };
+
+  // Theme state: defaults to 'theme-dark-slate'
+  const [theme, setTheme] = useState<string>(() => {
+    return localStorage.getItem('admin_theme') || 'theme-dark-slate';
   });
 
-  const toggleTheme = () => {
-    setTheme(prev => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('admin_theme', next);
-      return next;
-    });
+  const changeTheme = (newTheme: string) => {
+    setTheme(newTheme);
+    localStorage.setItem('admin_theme', newTheme);
   };
 
   // Sync theme class to document element for portals/modals/variables to render perfectly
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
+    const themeClasses = [
+      'theme-light-default', 'theme-dark-slate', 'theme-emerald-glass', 'theme-midnight-violet',
+      'theme-nordic-frost', 'theme-cyberpunk', 'theme-sunset-gold', 'theme-rose-sakura',
+      'theme-crimson-phantom', 'theme-forest-moss', 'theme-ocean-abreeze', 'theme-retro-amber',
+      'light', 'dark'
+    ];
+    root.classList.remove(...themeClasses);
     root.classList.add(theme);
+    
+    // Compatibility flag for 3rd party components
+    if (theme === 'theme-light-default') {
+      root.classList.add('light');
+    } else {
+      root.classList.add('dark');
+    }
   }, [theme]);
 
   // Load products from backend (live/real-time)
@@ -95,16 +111,12 @@ export default function App() {
     });
 
     if (result.isConfirmed) {
-      const AUTH_TOKEN = 'admin-secret-token';
       try {
         const isBackendProduct = !isNaN(Number(id));
         if (isBackendProduct) {
           const res = await fetch(`${getBackendUrl()}/api/v1/admin/products/${id}`, {
             method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${AUTH_TOKEN}`,
-              'bypass-tunnel-reminder': 'true'
-            }
+            headers: getAdminHeaders()
           });
           if (!res.ok) {
             throw new Error(`Backend response status ${res.status}`);
@@ -149,7 +161,7 @@ export default function App() {
           searchTerm={searchTerm} 
           setSearchTerm={setSearchTerm} 
           theme={theme}
-          toggleTheme={toggleTheme}
+          onChangeTheme={changeTheme}
         />
 
         {/* Content Container */}
@@ -181,6 +193,7 @@ export default function App() {
               <ProductTable 
                 products={products}
                 onAddProductClick={() => setIsAddModalOpen(true)}
+                onEditProductClick={(product) => setEditingProduct(product)}
                 onDeleteProduct={handleDeleteProduct}
                 searchTerm={searchTerm}
               />
@@ -227,7 +240,7 @@ export default function App() {
                   ].map((stat, idx) => {
                     const Icon = stat.icon;
                     return (
-                      <div key={idx} className="rounded-2xl border border-border-card bg-panel p-5 flex items-center justify-between">
+                      <div key={idx} className="rounded-2xl glass-card float-card p-5 flex items-center justify-between shadow-lg">
                         <div>
                           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">{stat.label}</p>
                           <h3 className="mt-2 text-2xl font-bold text-text-primary">{stat.val}</h3>
@@ -241,56 +254,56 @@ export default function App() {
                   })}
                 </div>
 
-                {/* Info Card / Testing Guide */}
-                <div className="rounded-2xl border border-border-card bg-panel p-6 shadow-xl relative overflow-hidden">
-                  <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 h-64 w-64 rounded-full bg-emerald-500/5 blur-3xl" />
+                {/* Operations Briefing */}
+                <div className="rounded-2xl glass-panel p-6 shadow-xl relative overflow-hidden float-card">
+                  <div className="mesh-glow-orb right-0 top-0 h-64 w-64 bg-emerald-500/10" />
                   
-                  <h3 className="text-lg font-bold text-text-primary flex items-center gap-2">
-                    <HelpCircle className="h-5.5 w-5.5 text-emerald-400 animate-bounce" />
-                    How to test the features:
+                  <h3 className="text-lg font-bold text-text-primary flex items-center gap-2 relative z-10">
+                    <HelpCircle className="h-5.5 w-5.5 text-emerald-400 animate-pulse" />
+                    Operations Briefing
                   </h3>
                   
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
                     <div className="space-y-4">
                       <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400 font-mono">1</span>
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400 font-mono">01</span>
                         <div>
-                          <p className="text-sm font-semibold text-text-primary">Go to Products Tab</p>
-                          <p className="text-xs text-text-secondary mt-0.5">Click the "Products" sidebar button or the tab links to access inventory management.</p>
+                          <p className="text-sm font-semibold text-text-primary">Edge API Runtime</p>
+                          <p className="text-xs text-text-secondary mt-0.5">Production traffic is routed through the Cloudflare Worker backend.</p>
                         </div>
                       </div>
 
                       <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400 font-mono">2</span>
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400 font-mono">02</span>
                         <div>
-                          <p className="text-sm font-semibold text-text-primary">Add a New Product</p>
-                          <p className="text-xs text-text-secondary mt-0.5">Click the "+ Add Product" button in the toolbar to open the creation overlay.</p>
+                          <p className="text-sm font-semibold text-text-primary">Live Inventory Sync</p>
+                          <p className="text-xs text-text-secondary mt-0.5">Products, categories, customers, and orders read from the shared Neon PostgreSQL database.</p>
                         </div>
                       </div>
 
                       <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400 font-mono">3</span>
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400 font-mono">03</span>
                         <div>
-                          <p className="text-sm font-semibold text-text-primary">Upload any large image</p>
-                          <p className="text-xs text-text-secondary mt-0.5">Select a high-resolution PNG or JPG file. Watch it instantly get compressed to under 150KB as WebP in your browser using HTML5 Canvas!</p>
+                          <p className="text-sm font-semibold text-text-primary">Browser Image Optimization</p>
+                          <p className="text-xs text-text-secondary mt-0.5">Large product images are compressed to WebP before the upload handoff.</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-4">
                       <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400 font-mono">4</span>
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400 font-mono">04</span>
                         <div>
-                          <p className="text-sm font-semibold text-text-primary">Submit and Watch the Console</p>
-                          <p className="text-xs text-text-secondary mt-0.5">The modal console prints step-by-step API actions: calling backend for presigned credentials, directly PUTing binary payload to Cloudflare R2, and finishing with metadata registration.</p>
+                          <p className="text-sm font-semibold text-text-primary">Admin Key Isolation</p>
+                          <p className="text-xs text-text-secondary mt-0.5">Privileged calls use a browser-saved API key instead of a token baked into the public bundle.</p>
                         </div>
                       </div>
 
                       <div className="flex gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400 font-mono">5</span>
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-400 font-mono">05</span>
                         <div>
                           <p className="text-sm font-semibold text-text-primary">Low Stock Highlights</p>
-                          <p className="text-xs text-text-secondary mt-0.5">If you add a product with stock &lt; 5, its row will show with a subtle warning red alert color and a low stock warning indicator.</p>
+                          <p className="text-xs text-text-secondary mt-0.5">Low-stock SKUs are surfaced in the dashboard and product table for faster replenishment decisions.</p>
                         </div>
                       </div>
                     </div>
@@ -299,9 +312,10 @@ export default function App() {
 
                 {/* Decorative Visual Charts */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                  <div className="rounded-2xl border border-border-card bg-panel p-5">
-                    <h4 className="text-sm font-semibold text-text-primary">Weekly System Activity</h4>
-                    <div className="mt-6 flex h-48 items-end gap-2 border-b border-l border-border-card pb-2 pl-2">
+                  <div className="rounded-2xl glass-panel p-5 float-card shadow-lg relative overflow-hidden">
+                    <div className="mesh-glow-orb right-0 top-0 h-40 w-40 bg-teal-500/10" />
+                    <h4 className="text-sm font-semibold text-text-primary relative z-10">Weekly System Activity</h4>
+                    <div className="mt-6 flex h-48 items-end gap-2 border-b border-l border-border-card pb-2 pl-2 relative z-10">
                       {[65, 45, 75, 55, 90, 80, 95].map((h, i) => (
                         <div key={i} className="group relative flex-1 flex flex-col items-center">
                           <div 
@@ -316,9 +330,10 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-border-card bg-panel p-5">
-                    <h4 className="text-sm font-semibold text-text-primary">Category Catalog Distribution</h4>
-                    <div className="mt-6 space-y-4">
+                  <div className="rounded-2xl glass-panel p-5 float-card shadow-lg relative overflow-hidden">
+                    <div className="mesh-glow-orb left-0 bottom-0 h-40 w-40 bg-indigo-500/10" />
+                    <h4 className="text-sm font-semibold text-text-primary relative z-10">Category Catalog Distribution</h4>
+                    <div className="mt-6 space-y-4 relative z-10">
                       {[
                         { name: 'Fruits', percentage: 35, count: 12 },
                         { name: 'Vegetables', percentage: 25, count: 8 },
@@ -349,10 +364,10 @@ export default function App() {
             ) : currentTab === 'analytics' ? (
               <AnalyticsView />
             ) : currentTab === 'settings' ? (
-              <SettingsView />
+              <SettingsView theme={theme} setTheme={changeTheme} />
             ) : (
               /* General Under Construction view for other tabs */
-              <div className="rounded-2xl border border-border-card bg-panel p-12 text-center">
+              <div className="rounded-2xl glass-panel p-12 text-center float-card shadow-lg">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-bg-input border border-border-card text-text-secondary mb-4 animate-pulse">
                   <TrendingUp className="h-6 w-6" />
                 </div>
@@ -378,6 +393,14 @@ export default function App() {
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onProductAdded={handleProductAdded}
+      />
+
+      {/* Edit Product Modal Overlay */}
+      <EditProductModal 
+        isOpen={editingProduct !== null} 
+        onClose={() => setEditingProduct(null)} 
+        product={editingProduct}
+        onProductUpdated={handleProductUpdated}
       />
       
     </div>

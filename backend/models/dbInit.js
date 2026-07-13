@@ -125,11 +125,12 @@ const initializeDatabase = async () => {
         id           SERIAL PRIMARY KEY,
         email        VARCHAR(255),
         phone_number VARCHAR(50),
-        otp          VARCHAR(6)  NOT NULL,
+        otp          VARCHAR(128) NOT NULL,
         expires_at   TIMESTAMP WITH TIME ZONE NOT NULL,
         created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    await client.query(`ALTER TABLE otps ALTER COLUMN otp TYPE VARCHAR(128);`);
     console.log('OTPs table checked/migrated.');
 
     // 2.2.1 Indexes for fast lookups

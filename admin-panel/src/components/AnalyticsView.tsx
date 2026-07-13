@@ -21,7 +21,7 @@ export default function AnalyticsView() {
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border-card bg-panel p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl glass-panel p-5 float-card shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
             <BarChart3 className="h-5.5 w-5.5 text-emerald-400" />
@@ -36,7 +36,7 @@ export default function AnalyticsView() {
         {reports.map((report, idx) => {
           const Icon = report.icon;
           return (
-            <div key={idx} className="rounded-2xl border border-border-card bg-panel p-5 flex items-center justify-between">
+            <div key={idx} className="rounded-2xl glass-card float-card p-5 flex items-center justify-between shadow-md">
               <div>
                 <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">{report.label}</p>
                 <h3 className="mt-2 text-2xl font-bold text-text-primary">{report.val}</h3>
@@ -60,14 +60,15 @@ export default function AnalyticsView() {
       {/* Interactive Charts Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart: Sales Performance */}
-        <div className="lg:col-span-2 rounded-2xl border border-border-card bg-panel p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-border-card pb-3">
+        <div className="lg:col-span-2 rounded-2xl glass-panel p-5 space-y-4 float-card shadow-lg relative overflow-hidden">
+          <div className="mesh-glow-orb right-0 top-0 h-40 w-40 bg-emerald-500/10" />
+          <div className="flex justify-between items-center border-b border-border-card/40 pb-3 relative z-10">
             <h4 className="text-sm font-bold text-text-primary uppercase tracking-wider">Weekly Revenue Analytics</h4>
             <span className="text-xs text-text-secondary">Mon, Jul 1 - Sun, Jul 7</span>
           </div>
           
           {/* Custom SVG Bar Chart */}
-          <div className="flex h-64 items-end gap-3.5 border-b border-l border-border-card pb-3 pl-3 pt-4">
+          <div className="flex h-64 items-end gap-3.5 border-b border-l border-border-card/40 pb-3 pl-3 pt-4 relative z-10">
             {[
               { day: 'Mon', val: 1200, height: '40%' },
               { day: 'Tue', val: 1800, height: '60%' },
@@ -94,8 +95,9 @@ export default function AnalyticsView() {
         </div>
 
         {/* Category Sales Distribution */}
-        <div className="rounded-2xl border border-border-card bg-panel p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-border-card pb-3">
+        <div className="rounded-2xl glass-panel p-5 space-y-4 float-card shadow-lg relative overflow-hidden">
+          <div className="mesh-glow-orb right-0 top-0 h-40 w-40 bg-blue-500/10" />
+          <div className="flex justify-between items-center border-b border-border-card/40 pb-3 relative z-10">
             <h4 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top Performing Categories</h4>
           </div>
           

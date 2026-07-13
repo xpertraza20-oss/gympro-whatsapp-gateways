@@ -30,14 +30,16 @@ git push -u origin main
    - **Runtime**: `Node`
    - **Build Command**: `npm install`
    - **Start Command**: `node index.js`
-4. Add the following **Environment Variables** in Render's configuration:
-   - `DATABASE_URL` = `postgresql://neondb_owner:npg_brcfN7F6WGEP@ep-damp-rain-asq4h4hp-pooler.c-4.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require`
+4. Add the following **Environment Variables** in Render's configuration. Use values from your password manager or provider dashboard; do not commit real secrets to Git:
+   - `DATABASE_URL` = `<your Neon/Postgres connection string>`
    - `NODE_ENV` = `production`
-   - `R2_ACCOUNT_ID` = `mock_account_id`
-   - `R2_ACCESS_KEY_ID` = `mock_access_key_id`
-   - `R2_SECRET_ACCESS_KEY` = `mock_secret_access_key`
-   - `R2_BUCKET_NAME` = `mock_bucket_name`
-   - `R2_PUBLIC_URL` = `https://mock_bucket_domain.r2.dev`
+   - `JWT_SECRET` = `<long random secret>`
+   - `ADMIN_API_KEY` = `<long random admin API key>`
+   - `R2_ACCOUNT_ID` = `<your Cloudflare account id>`
+   - `R2_ACCESS_KEY_ID` = `<your R2 access key id>`
+   - `R2_SECRET_ACCESS_KEY` = `<your R2 secret access key>`
+   - `R2_BUCKET_NAME` = `<your R2 bucket name>`
+   - `R2_PUBLIC_URL` = `<your R2 public bucket/custom domain URL>`
 5. Click **Create Web Service**.
 
 Once the deployment finishes, copy the URL of your Render service (e.g., `https://grocery-delivery-backend.onrender.com`) and paste it in the **Settings** tab of your Admin Panel!

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'order_tracking_screen.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
@@ -12,6 +12,7 @@ class OrderSuccessScreen extends StatelessWidget {
     final totalAmount = order['total_amount'] is num 
         ? (order['total_amount'] as num).toDouble() 
         : double.tryParse(order['total_amount']?.toString() ?? '') ?? 0.0;
+    const primaryColor = Color(0xFF006E2F);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -28,13 +29,13 @@ class OrderSuccessScreen extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
+                  color: const Color(0xFFE8F5E9),
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFA7F3D0), width: 4),
+                  border: Border.all(color: const Color(0xffC8E6C9), width: 4),
                 ),
                 child: const Icon(
                   Icons.check_circle_rounded,
-                  color: Color(0xFF10B981),
+                  color: primaryColor,
                   size: 80,
                 ),
               ),
@@ -104,7 +105,7 @@ class OrderSuccessScreen extends StatelessWidget {
                           'Rs. ${totalAmount.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF10B981),
+                            color: primaryColor,
                             fontSize: 16,
                           ),
                         ),
@@ -130,7 +131,7 @@ class OrderSuccessScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
+                    backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 0,
@@ -150,10 +151,10 @@ class OrderSuccessScreen extends StatelessWidget {
                     Navigator.popUntil(context, (route) => route.isFirst);
                   },
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF10B981),
+                    foregroundColor: primaryColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                      side: const BorderSide(color: primaryColor, width: 1.5),
                     ),
                   ),
                   child: const Text(

@@ -10,9 +10,38 @@ import {
   Check
 } from 'lucide-react';
 import { getSwal, showToast } from '../utils/alerts';
-import { getBackendUrl, setBackendUrl, getCurrencySymbol, setCurrencySymbol } from '../utils/config';
+import {
+  clearAdminToken,
+  getAdminToken,
+  getBackendUrl,
+  setAdminToken,
+  setBackendUrl,
+  getCurrencySymbol,
+  setCurrencySymbol
+} from '../utils/config';
+import { Palette } from 'lucide-react';
 
-export default function SettingsView() {
+interface SettingsViewProps {
+  theme: string;
+  setTheme: (theme: string) => void;
+}
+
+const THEMES_GRID = [
+  { id: 'theme-light-default', label: 'Frosted Opal', bg: 'bg-[#f8fafc]', accent: 'bg-[#10b981]', desc: 'Bright frosted glass mode for high readability.' },
+  { id: 'theme-nordic-frost', label: 'Nordic Frost', bg: 'bg-[#f0f7ff]', accent: 'bg-[#0284c7]', desc: 'Crisp polar ice blue background.' },
+  { id: 'theme-emerald-glass', label: 'Emerald Glass', bg: 'bg-[#f0fdf4]', accent: 'bg-[#059669]', desc: 'Premium soft organic green blur.' },
+  { id: 'theme-midnight-violet', label: 'Midnight Violet', bg: 'bg-[#f5f3ff]', accent: 'bg-[#7c3aed]', desc: 'Translucent lavender with violet accents.' },
+  { id: 'theme-rose-sakura', label: 'Rose Sakura', bg: 'bg-[#fff1f2]', accent: 'bg-[#e11d48]', desc: 'Delicate light rose blossoms theme.' },
+  { id: 'theme-cyberpunk', label: 'Cyberpunk Light', bg: 'bg-[#faf5ff]', accent: 'bg-[#db2777]', desc: 'Translucent lilac base with neon magenta highlights.' },
+  { id: 'theme-sunset-gold', label: 'Sunset Gold', bg: 'bg-[#fffbeb]', accent: 'bg-[#d97706]', desc: 'Warm ivory background with golden copper.' },
+  { id: 'theme-ocean-abreeze', label: 'Ocean Pearl', bg: 'bg-[#f0fdfa]', accent: 'bg-[#0d9488]', desc: 'Subtle ocean turquoise sand gradient.' },
+  { id: 'theme-crimson-phantom', label: 'Crimson Light', bg: 'bg-[#fef2f2]', accent: 'bg-[#dc2626]', desc: 'Frosted coral red background accents.' },
+  { id: 'theme-forest-moss', label: 'Forest Moss', bg: 'bg-[#f7fee7]', accent: 'bg-[#65a30d]', desc: 'Clean pastel moss green colorway.' },
+  { id: 'theme-dark-slate', label: 'Minimal Slate', bg: 'bg-[#f1f5f9]', accent: 'bg-[#334155]', desc: 'Crisp minimal paper slate workspace.' },
+  { id: 'theme-retro-amber', label: 'Retro Amber', bg: 'bg-[#fafaf9]', accent: 'bg-[#b45309]', desc: 'Vintage warm ivory and honey amber.' },
+];
+
+export default function SettingsView({ theme, setTheme }: SettingsViewProps) {
   const [storeName, setStoreName] = useState('FreshCart PK');
   const [storeEmail, setStoreEmail] = useState('admin@freshcart.com');
   const [deliveryFee, setDeliveryFee] = useState('150');
@@ -25,6 +54,7 @@ export default function SettingsView() {
 
   // Backend URL config
   const [backendUrl, setBackendUrlState] = useState(() => getBackendUrl());
+  const [adminToken, setAdminTokenState] = useState(() => getAdminToken());
   const [isTesting, setIsTesting] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
@@ -44,7 +74,7 @@ export default function SettingsView() {
         setTestStatus('error');
         showToast('error', `Backend returned status ${res.status}`);
       }
-    } catch (err: any) {
+    } catch {
       setTestStatus('error');
       showToast('error', 'Could not connect to backend server.');
     } finally {
@@ -54,12 +84,22 @@ export default function SettingsView() {
 
   const handleResetBackendUrl = () => {
     localStorage.removeItem('api_backend_url');
-    setBackendUrlState('https://grocery-backend-2prq.onrender.com');
+    setBackendUrlState('https://grocery-backend.xpertraza13.workers.dev');
     setTestStatus('idle');
     showToast('success', 'Reset to default backend URL successfully!');
     setTimeout(() => {
       window.location.reload();
     }, 1000);
+  };
+
+  const handleSaveAdminToken = () => {
+    if (!adminToken.trim()) {
+      clearAdminToken();
+      showToast('success', 'Admin API key cleared.');
+      return;
+    }
+    setAdminToken(adminToken);
+    showToast('success', 'Admin API key saved for this browser.');
   };
 
   const handleCurrencyChange = (newSymbol: string) => {
@@ -91,7 +131,7 @@ export default function SettingsView() {
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border-card bg-panel p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl glass-panel p-5 float-card shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
             <Settings className="h-5.5 w-5.5 text-emerald-400" />
@@ -103,13 +143,14 @@ export default function SettingsView() {
 
       <form onSubmit={handleSaveSettings} className="space-y-6 max-w-4xl">
         {/* Section 0: Backend API URL */}
-        <div className="rounded-2xl border border-emerald-500/30 bg-panel p-5 space-y-4">
+        <div className="rounded-2xl glass-panel border border-emerald-500/30 p-5 space-y-4 relative overflow-hidden float-card shadow-lg">
+          <div className="mesh-glow-orb right-0 top-0 h-32 w-32 bg-emerald-500/10" />
           <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
             <Server className="h-4.5 w-4.5 text-emerald-400" />
             Backend API Connection
           </h3>
           <p className="text-xs text-text-secondary">
-            Set the public URL of your deployed backend API. This must be reachable from the internet (e.g., Railway, Render, ngrok).
+            Set the public URL of your deployed Cloudflare Worker backend API.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
             <div className="flex-1">
@@ -121,7 +162,7 @@ export default function SettingsView() {
                 type="url"
                 value={backendUrl}
                 onChange={(e) => { setBackendUrlState(e.target.value); setTestStatus('idle'); }}
-                placeholder="https://your-backend.railway.app"
+                placeholder="https://your-worker.your-subdomain.workers.dev"
                 className="w-full rounded-xl bg-bg-input border border-border-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-emerald-500 transition-colors font-mono"
               />
             </div>
@@ -162,16 +203,39 @@ export default function SettingsView() {
                 : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
           }`}>
             {testStatus === 'success' 
-              ? '✅ Backend is online and URL saved. Products and categories will load from this server.' 
+              ? 'Backend is online and URL saved. Products and categories will load from this server.' 
               : testStatus === 'error'
-                ? '❌ Could not reach backend. Check the URL is publicly accessible (not localhost).'
-                : '⚠️ Currently using: ' + backendUrl + ' — Click "Test & Save" to verify connection.'
+                ? 'Could not reach backend. Check that the Worker URL is publicly accessible.'
+                : 'Currently using: ' + backendUrl + ' - click "Test & Save" to verify connection.'
             }
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 border-t border-border-card pt-4 md:grid-cols-[1fr_auto] md:items-end">
+            <div>
+              <label className="block text-xs font-semibold text-text-secondary uppercase mb-1.5">
+                Admin API Key
+              </label>
+              <input
+                type="password"
+                value={adminToken}
+                onChange={(e) => setAdminTokenState(e.target.value)}
+                placeholder="Paste Cloudflare Worker ADMIN_API_KEY"
+                className="w-full rounded-xl bg-bg-input border border-border-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-emerald-500 transition-colors font-mono"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveAdminToken}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap bg-bg-input text-text-secondary border border-border-card hover:text-text-primary hover:bg-panel"
+            >
+              <Check className="h-4 w-4" />
+              Save Key
+            </button>
           </div>
         </div>
 
         {/* Section 1: Store profile */}
-        <div className="rounded-2xl border border-border-card bg-panel p-5 space-y-4">
+        <div className="rounded-2xl glass-panel p-5 space-y-4 float-card shadow-lg">
           <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
             <Store className="h-4.5 w-4.5 text-emerald-400" />
             Store Information
@@ -210,7 +274,7 @@ export default function SettingsView() {
         </div>
 
         {/* Section 2: Delivery settings */}
-        <div className="rounded-2xl border border-border-card bg-panel p-5 space-y-4">
+        <div className="rounded-2xl glass-panel p-5 space-y-4 float-card shadow-lg">
           <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
             <Truck className="h-4.5 w-4.5 text-emerald-400" />
             Shipping & Logistics configuration
@@ -238,7 +302,7 @@ export default function SettingsView() {
         </div>
 
         {/* Section 3: Payments */}
-        <div className="rounded-2xl border border-border-card bg-panel p-5 space-y-4">
+        <div className="rounded-2xl glass-panel p-5 space-y-4 float-card shadow-lg">
           <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary flex items-center gap-2">
             <CreditCard className="h-4.5 w-4.5 text-emerald-400" />
             Merchant Payment Gateways
@@ -272,11 +336,56 @@ export default function SettingsView() {
           </div>
         </div>
 
+        {/* Section 4: Premium Dashboard Themes */}
+        <div className="rounded-2xl glass-panel p-5 space-y-4 float-card shadow-lg relative overflow-hidden">
+          <div className="mesh-glow-orb right-0 top-0 h-32 w-32 bg-accent-primary/10" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary flex items-center gap-2 relative z-10">
+            <Palette className="h-4.5 w-4.5 text-accent-primary" />
+            Premium Themes Selection
+          </h3>
+          <p className="text-xs text-text-secondary relative z-10">
+            Select one of the 12 gorgeous high-fidelity themes. Changes apply instantly.
+          </p>
+          <div className="flex flex-col gap-2 relative z-10 max-w-xl">
+            {THEMES_GRID.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTheme(t.id)}
+                className={`flex items-center justify-between rounded-xl p-3 border transition-all duration-200 cursor-pointer ${
+                  theme === t.id
+                    ? 'border-accent-primary bg-accent-primary/5 ring-1 ring-accent-primary/10 shadow-md'
+                    : 'border-border-card/40 bg-bg-input hover:border-border-card hover:bg-hover-panel'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  {/* Swatch circle */}
+                  <div className="flex h-8 w-14 shrink-0 overflow-hidden rounded-lg border border-border-card/60">
+                    <div className={`w-1/2 ${t.bg}`} />
+                    <div className={`w-1/2 ${t.accent}`} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-text-primary block">{t.label}</span>
+                    <span className="text-[10px] text-text-secondary block mt-0.5">{t.desc}</span>
+                  </div>
+                </div>
+                
+                {/* Active check indicator */}
+                {theme === t.id && (
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-primary text-white font-bold text-xs shrink-0 shadow-sm">
+                    ✓
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Save button */}
         <div className="flex justify-end pt-2">
           <button
             type="submit"
-            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-bold text-slate-950 hover:brightness-110 active:scale-98 transition-all duration-200 cursor-pointer shadow-lg shadow-emerald-500/15"
+            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary px-6 py-3 text-sm font-bold text-white hover:brightness-110 active:scale-98 transition-all duration-200 cursor-pointer shadow-lg shadow-accent-primary/15"
           >
             <Save className="h-4.5 w-4.5" />
             Save Store Configuration

@@ -4,7 +4,9 @@ const {
   login,
   verifyOtp,
   requestOtp,          // legacy phone OTP
+  updateProfile,
 } = require('../controllers/authController');
+const { authenticateUser } = require('../middlewares/auth');
 
 const router = express.Router();
 
@@ -17,6 +19,9 @@ router.post('/login', login);
 
 // POST /api/v1/auth/verify-otp   → email, otp → validates + returns JWT
 router.post('/verify-otp', verifyOtp);
+
+// PUT /api/v1/auth/profile       → name, phone, location → updates profile in DB
+router.put('/profile', authenticateUser, updateProfile);
 
 // ─── Legacy Phone OTP Route (kept for mobile client backward compatibility)
 // POST /api/v1/auth/request-otp  → phoneNumber → sends console OTP

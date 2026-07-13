@@ -1,5 +1,28 @@
 const { pool } = require('../config/db');
 
+const VALID_ORDER_STATUSES = ['Pending', 'Confirmed', 'Dispatched', 'Delivered', 'Cancelled'];
+
+const normalizeOrderStatus = (status) => {
+  const legacyMap = {
+    Shipped: 'Dispatched',
+    Completed: 'Delivered'
+  };
+  return legacyMap[status] || status;
+};
+
+const parseOrderItems = (items) => {
+  if (Array.isArray(items)) return items;
+  if (typeof items === 'string') {
+    try {
+      const parsed = JSON.parse(items);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      return [];
+    }
+  }
+  return [];
+};
+
 /**
  * Places a new order
  * POST /api/v1/orders
@@ -131,13 +154,17 @@ module.exports = {
           id: row.id,
           customerName: row.customer_name || 'Anonymous',
           email: row.customer_email || 'N/A',
-          itemsCount: Array.isArray(row.items) ? row.items.length : 0,
+          itemsCount: parseOrderItems(row.items).length,
           totalAmount: parseFloat(row.total_amount),
-          status: row.status,
+          status: normalizeOrderStatus(row.status),
           date: new Date(row.created_at).toLocaleDateString('en-US', {
             year: 'numeric', month: 'short', day: 'numeric'
           }),
-          paymentMethod: row.payment_method
+          paymentMethod: row.payment_method,
+          deliveryAddress: row.delivery_address,
+          delivery_address: row.delivery_address,
+          items: parseOrderItems(row.items),
+          created_at: row.created_at
         }))
       });
     } catch (err) {
@@ -150,10 +177,12 @@ module.exports = {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!status) {
+    const normalizedStatus = normalizeOrderStatus(status);
+
+    if (!normalizedStatus || !VALID_ORDER_STATUSES.includes(normalizedStatus)) {
       return res.status(400).json({
         success: false,
-        message: 'Status is a required field.'
+        message: 'A valid status is required.'
       });
     }
 
@@ -164,7 +193,7 @@ module.exports = {
         WHERE id = $2
         RETURNING *;
       `;
-      const result = await pool.query(query, [status, parseInt(id, 10)]);
+      const result = await pool.query(query, [normalizedStatus, parseInt(id, 10)]);
 
       if (result.rows.length === 0) {
         return res.status(404).json({

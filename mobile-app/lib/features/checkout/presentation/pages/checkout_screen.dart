@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../cart/presentation/bloc/cart_bloc.dart';
 import '../../../cart/presentation/bloc/cart_event.dart';
 import '../../../cart/presentation/bloc/cart_state.dart';
@@ -22,6 +23,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _paymentMethod = 'COD';
 
   @override
+  void initState() {
+    super.initState();
+    _loadUserDetails();
+  }
+
+  Future<void> _loadUserDetails() async {
+    const storage = FlutterSecureStorage();
+    final phone = await storage.read(key: 'user_phone');
+    final location = await storage.read(key: 'user_location');
+    if (mounted) {
+      setState(() {
+        if (phone != null) _phoneController.text = phone;
+        if (location != null) _addressController.text = location;
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _addressController.dispose();
     _phoneController.dispose();
@@ -36,6 +55,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           'title': item.product.title,
           'price': item.product.price,
           'quantity': item.quantity,
+          'image_url': item.product.imageUrl,
+          'unit': item.product.unit,
         };
       }).toList();
 
@@ -50,11 +71,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color(0xFF006E2F);
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Checkout', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: primaryColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -113,7 +136,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
+                            borderSide: const BorderSide(color: primaryColor, width: 2),
                           ),
                         ),
                         validator: (value) {
@@ -135,7 +158,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
+                            borderSide: const BorderSide(color: primaryColor, width: 2),
                           ),
                         ),
                         validator: (value) {
@@ -159,12 +182,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF10B981), width: 1.5),
+                          border: Border.all(color: primaryColor, width: 1.5),
                         ),
                         child: RadioListTile<String>(
                           value: 'COD',
                           groupValue: _paymentMethod,
-                          activeColor: const Color(0xFF10B981),
+                          activeColor: primaryColor,
                           title: const Text('Cash on Delivery (COD)', style: TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: const Text('Pay with cash when your package is delivered'),
                           onChanged: (val) {
@@ -211,7 +234,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 const Text('Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                 Text(
                                   'Rs. ${cartState.subtotal.toStringAsFixed(2)}',
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
                                 ),
                               ],
                             ),
@@ -227,7 +250,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         child: ElevatedButton(
                           onPressed: isLoading ? null : () => _placeOrder(cartState),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
+                            backgroundColor: primaryColor,
                             foregroundColor: Colors.white,
                             disabledBackgroundColor: Colors.grey.shade300,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

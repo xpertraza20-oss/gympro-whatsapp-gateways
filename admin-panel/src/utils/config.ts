@@ -1,17 +1,20 @@
+const DEFAULT_BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL || 'https://grocery-backend.xpertraza13.workers.dev';
+
 /**
  * Returns the currently configured Backend Base URL.
- * Defaults to the public localtunnel URL so deployed frontend works.
+ * Defaults to the Cloudflare Worker API.
  */
 export const getBackendUrl = (): string => {
   const saved = localStorage.getItem('api_backend_url');
   if (saved) {
     // If it's a local address or tunnel, ignore it on production deployments to prevent mixed content/offline blocks
     if (saved.includes('localhost') || saved.includes('127.0.0.1') || saved.includes('loca.lt') || saved.includes('ngrok')) {
-      return 'https://grocery-backend-2prq.onrender.com';
+      return DEFAULT_BACKEND_URL;
     }
     return saved;
   }
-  return 'https://grocery-backend-2prq.onrender.com';
+  return DEFAULT_BACKEND_URL;
 };
 
 /**
@@ -21,6 +24,30 @@ export const setBackendUrl = (url: string) => {
   // Clean trailing slashes
   const cleaned = url.replace(/\/+$/, '');
   localStorage.setItem('api_backend_url', cleaned);
+};
+
+/**
+ * Admin auth token is intentionally user-provided, not hardcoded in the bundle.
+ */
+export const getAdminToken = (): string => {
+  return localStorage.getItem('api_admin_token') || import.meta.env.VITE_ADMIN_TOKEN || '';
+};
+
+export const setAdminToken = (token: string) => {
+  localStorage.setItem('api_admin_token', token.trim());
+};
+
+export const clearAdminToken = () => {
+  localStorage.removeItem('api_admin_token');
+};
+
+export const getAdminHeaders = (json = false): Record<string, string> => {
+  const token = getAdminToken();
+  return {
+    ...(json ? { 'Content-Type': 'application/json' } : {}),
+    ...(token ? { Authorization: `Bearer ${token}`, 'X-Admin-Token': token } : {}),
+    'bypass-tunnel-reminder': 'true',
+  };
 };
 
 /**

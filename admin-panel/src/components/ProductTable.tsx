@@ -1,34 +1,37 @@
 import { useState, useMemo } from 'react';
 import { type Product, CATEGORIES } from '../utils/mockApi';
 import { formatPrice } from '../utils/config';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  AlertTriangle, 
-  TrendingDown, 
-  Plus, 
-  Trash2, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
+  TrendingDown,
+  Plus,
+  Trash2,
   ArrowUpDown,
-  Filter
+  Filter,
+  Pencil
 } from 'lucide-react';
 
 interface ProductTableProps {
   products: Product[];
   onAddProductClick: () => void;
+  onEditProductClick: (product: Product) => void;
   onDeleteProduct: (id: string) => void;
   searchTerm: string;
 }
 
-export default function ProductTable({ 
-  products, 
-  onAddProductClick, 
+export default function ProductTable({
+  products,
+  onAddProductClick,
+  onEditProductClick,
   onDeleteProduct,
   searchTerm
 }: ProductTableProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [sortField, setSortField] = useState<keyof Product>('title');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -50,8 +53,8 @@ export default function ProductTable({
     // 1. Search Filter
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase();
-      result = result.filter(p => 
-        p.title.toLowerCase().includes(term) || 
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(term) ||
         p.category.toLowerCase().includes(term) ||
         p.unit.toLowerCase().includes(term)
       );
@@ -70,7 +73,7 @@ export default function ProductTable({
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
       }
-      
+
       const strA = String(aVal).toLowerCase();
       const strB = String(bVal).toLowerCase();
       if (strA < strB) return sortOrder === 'asc' ? -1 : 1;
@@ -83,10 +86,10 @@ export default function ProductTable({
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(processedProducts.length / itemsPerPage));
-  
+
   // Adjust page if it exceeds total pages after filtering
   const activePage = currentPage > totalPages ? totalPages : currentPage;
-  
+
   const paginatedProducts = useMemo(() => {
     const startIndex = (activePage - 1) * itemsPerPage;
     return processedProducts.slice(startIndex, startIndex + itemsPerPage);
@@ -99,39 +102,39 @@ export default function ProductTable({
     <div className="space-y-6">
       {/* Metrics Row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-border-card bg-panel p-5">
+        <div className="rounded-2xl glass-card float-card p-5 shadow-md">
           <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Total Catalog Items</p>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-3xl font-bold text-text-primary">{products.length}</span>
-            <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-400">Active</span>
+            <span className="status-pill-green px-2 py-0.5 rounded-full text-xs font-semibold">Active</span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border-card bg-panel p-5">
+        <div className="rounded-2xl glass-card float-card p-5 shadow-md">
           <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Low Stock Warning</p>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-3xl font-bold text-red-400">
               {products.filter(p => p.stock < 5).length}
             </span>
-            <span className="flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-1 text-xs font-medium text-red-400">
+            <span className="flex items-center gap-1 status-pill-red px-2 py-0.5 rounded-full text-xs font-semibold">
               <TrendingDown className="h-3 w-3" /> Under 5 units
             </span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border-card bg-panel p-5">
+        <div className="rounded-2xl glass-card float-card p-5 shadow-md">
           <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Out of Stock</p>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-3xl font-bold text-amber-500">
               {products.filter(p => p.stock === 0).length}
             </span>
-            <span className="rounded-full bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-500">Urgent Reorder</span>
+            <span className="status-pill-amber px-2 py-0.5 rounded-full text-xs font-semibold">Urgent Reorder</span>
           </div>
         </div>
       </div>
 
       {/* Toolbar Controls */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border-card bg-panel p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl glass-panel p-4 float-card shadow-lg">
         {/* Category Selector */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-text-secondary flex items-center gap-1.5 mr-1">
@@ -139,11 +142,10 @@ export default function ProductTable({
           </span>
           <button
             onClick={() => { setSelectedCategory('All'); setCurrentPage(1); }}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
-              selectedCategory === 'All'
-                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10'
-                : 'bg-bg-input text-text-secondary hover:bg-hover-panel hover:text-text-primary border border-border-card'
-            }`}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${selectedCategory === 'All'
+              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10'
+              : 'bg-bg-input text-text-secondary hover:bg-hover-panel hover:text-text-primary border border-border-card'
+              }`}
           >
             All
           </button>
@@ -151,11 +153,10 @@ export default function ProductTable({
             <button
               key={category}
               onClick={() => { setSelectedCategory(category); setCurrentPage(1); }}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
-                selectedCategory === category
-                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10'
-                  : 'bg-bg-input text-text-secondary hover:bg-hover-panel hover:text-text-primary border border-border-card'
-              }`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${selectedCategory === category
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10'
+                : 'bg-bg-input text-text-secondary hover:bg-hover-panel hover:text-text-primary border border-border-card'
+                }`}
             >
               {category}
             </button>
@@ -172,7 +173,7 @@ export default function ProductTable({
       </div>
 
       {/* Table Container */}
-      <div className="overflow-hidden rounded-2xl border border-border-card bg-panel shadow-md">
+      <div className="overflow-hidden rounded-2xl glass-panel shadow-xl float-card">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -204,11 +205,11 @@ export default function ProductTable({
                   return (
                     <tr
                       key={product.id}
-                      className={`transition-colors duration-150 ${
-                        isLowStock 
-                          ? 'bg-red-500/[0.03] hover:bg-red-500/[0.06] border-l-2 border-red-500' 
-                          : 'hover:bg-hover-panel border-l-2 border-transparent'
-                      }`}
+                      onClick={() => onEditProductClick(product)}
+                      className={`cursor-pointer transition-colors duration-150 ${isLowStock
+                        ? 'bg-red-500/[0.03] hover:bg-red-500/[0.06] border-l-2 border-red-500'
+                        : 'hover:bg-hover-panel border-l-2 border-transparent'
+                        }`}
                     >
                       {/* Product Item / Info */}
                       <td className="px-6 py-4">
@@ -258,13 +259,22 @@ export default function ProductTable({
 
                       {/* Actions */}
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => onDeleteProduct(product.id)}
-                          className="rounded-lg p-2 text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
-                          title="Delete Product"
-                        >
-                          <Trash2 className="h-4.5 w-4.5" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onEditProductClick(product); }}
+                            className="rounded-lg p-2 text-text-secondary hover:bg-emerald-500/10 hover:text-emerald-450 transition-colors cursor-pointer"
+                            title="Edit Product"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onDeleteProduct(product.id); }}
+                            className="rounded-lg p-2 text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
+                            title="Delete Product"
+                          >
+                            <Trash2 className="h-4.5 w-4.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -288,7 +298,7 @@ export default function ProductTable({
               <span className="font-semibold text-text-primary">{endIndex}</span> of{' '}
               <span className="font-semibold text-text-primary">{processedProducts.length}</span> results
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}

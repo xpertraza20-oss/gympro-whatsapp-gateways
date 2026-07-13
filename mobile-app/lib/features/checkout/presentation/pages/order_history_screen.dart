@@ -1,5 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../bloc/order_bloc.dart';
 import '../bloc/order_event.dart';
 import '../bloc/order_state.dart';
@@ -25,18 +27,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color(0xFF006E2F);
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Order History', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: primaryColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: BlocBuilder<OrderBloc, OrderState>(
         builder: (context, state) {
           if (state is OrderLoading) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)));
+            return const Center(child: CircularProgressIndicator(color: primaryColor));
           }
 
           if (state is OrderError) {
@@ -53,7 +57,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     ElevatedButton(
                       onPressed: _fetchHistory,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF10B981),
+                        backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('Retry'),
@@ -92,7 +96,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               onRefresh: () async {
                 _fetchHistory();
               },
-              color: const Color(0xFF10B981),
+              color: primaryColor,
               child: ListView.separated(
                 padding: const EdgeInsets.all(16.0),
                 itemCount: orders.length,
@@ -104,6 +108,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   final totalAmount = order['total_amount'] is num 
                       ? (order['total_amount'] as num).toDouble() 
                       : double.tryParse(order['total_amount']?.toString() ?? '') ?? 0.0;
+
+                  // Parse items safely
+                  List<dynamic> orderItems = [];
+                  if (order['items'] is List) {
+                    orderItems = order['items'];
+                  } else if (order['items'] is String) {
+                    try {
+                      orderItems = jsonDecode(order['items']);
+                    } catch (_) {}
+                  }
 
                   // Date Formatter
                   final dateStr = order['created_at'] != null
@@ -139,17 +153,87 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                           const Divider(height: 24),
                           Text(
                             'Address: ${order['delivery_address']}',
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                           ),
-                          const SizedBox(height: 12),
+                          if (orderItems.isNotEmpty) ...[
+                            const Divider(height: 24),
+                            const Text(
+                              'Items Ordered:',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF374151)),
+                            ),
+                            const SizedBox(height: 8),
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: orderItems.length,
+                              itemBuilder: (context, itemIndex) {
+                                final item = orderItems[itemIndex];
+                                final title = item['title'] ?? item['product']?['title'] ?? 'Product';
+                                final price = item['price'] is num 
+                                    ? (item['price'] as num).toDouble() 
+                                    : double.tryParse(item['price']?.toString() ?? '') ?? 0.0;
+                                final quantity = item['quantity'] ?? 1;
+                                final imageUrl = item['image_url'] ?? item['product']?['image_url'] ?? '';
+                                final unit = item['unit'] ?? item['product']?['unit'] ?? '';
+
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                  child: Row(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Container(
+                                          width: 40,
+                                          height: 40,
+                                          color: Colors.grey[100],
+                                          child: imageUrl.isNotEmpty
+                                              ? CachedNetworkImage(
+                                                  imageUrl: imageUrl,
+                                                  fit: BoxFit.cover,
+                                                  errorWidget: (context, url, error) => const Icon(Icons.shopping_basket, size: 20, color: Colors.grey),
+                                                )
+                                              : const Icon(Icons.shopping_basket, size: 20, color: Colors.grey),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              title,
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1F2937)),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 1),
+                                            Text(
+                                              '${unit.isNotEmpty ? "$unit • " : ""}Qty: $quantity',
+                                              style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Rs. ${(price * quantity).toStringAsFixed(2)}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1F2937)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                          const Divider(height: 24),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
                                 'Rs. ${totalAmount.toStringAsFixed(2)}',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF10B981)),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: primaryColor),
                               ),
                               ElevatedButton(
                                 onPressed: () {
@@ -162,10 +246,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
-                                  foregroundColor: const Color(0xFF10B981),
+                                  foregroundColor: primaryColor,
                                   surfaceTintColor: Colors.white,
                                   elevation: 0,
-                                  side: const BorderSide(color: Color(0xFF10B981)),
+                                  side: const BorderSide(color: primaryColor),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 ),

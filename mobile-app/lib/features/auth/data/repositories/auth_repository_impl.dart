@@ -13,6 +13,16 @@ class AuthRepositoryImpl implements AuthRepository {
     required this.secureStorage,
   });
 
+  Future<void> _saveUserLocal(Map<String, dynamic> result) async {
+    if (result['user'] != null) {
+      final user = result['user'] as Map<String, dynamic>;
+      await secureStorage.write(key: 'user_name', value: user['name'] ?? '');
+      await secureStorage.write(key: 'user_email', value: user['email'] ?? '');
+      await secureStorage.write(key: 'user_phone', value: user['phone'] ?? '');
+      await secureStorage.write(key: 'user_location', value: user['location'] ?? '');
+    }
+  }
+
   @override
   Future<Map<String, dynamic>> signup({
     required String name,
@@ -28,7 +38,11 @@ class AuthRepositoryImpl implements AuthRepository {
       location: location,
       password: password,
     );
-    await saveToken(result['token'] as String);
+    if (result['token'] != null) {
+      await saveToken(result['token'] as String);
+    }
+    await secureStorage.write(key: 'user_password', value: password);
+    await _saveUserLocal(result);
     return result;
   }
 
@@ -41,7 +55,11 @@ class AuthRepositoryImpl implements AuthRepository {
       email: email,
       password: password,
     );
-    await saveToken(result['token'] as String);
+    if (result['token'] != null) {
+      await saveToken(result['token'] as String);
+    }
+    await secureStorage.write(key: 'user_password', value: password);
+    await _saveUserLocal(result);
     return result;
   }
 
@@ -49,6 +67,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Map<String, dynamic>> verifyOtp({required String email, required String otp}) async {
     final result = await remoteDataSource.verifyOtp(email: email, otp: otp);
     await saveToken(result['token'] as String);
+    await _saveUserLocal(result);
     return result;
   }
 
@@ -65,10 +84,35 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> clearToken() async {
     await secureStorage.delete(key: _tokenKey);
+    await secureStorage.delete(key: 'user_name');
+    await secureStorage.delete(key: 'user_email');
+    await secureStorage.delete(key: 'user_phone');
+    await secureStorage.delete(key: 'user_location');
+    await secureStorage.delete(key: 'user_password');
   }
 
   @override
   Future<void> requestOtp(String phoneNumber) async {
     await remoteDataSource.requestOtp(phoneNumber);
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    required String phone,
+    required String location,
+    String? password,
+  }) async {
+    final result = await remoteDataSource.updateProfile(
+      name: name,
+      phone: phone,
+      location: location,
+      password: password,
+    );
+    if (password != null && password.isNotEmpty) {
+      await secureStorage.write(key: 'user_password', value: password);
+    }
+    await _saveUserLocal(result);
+    return result;
   }
 }

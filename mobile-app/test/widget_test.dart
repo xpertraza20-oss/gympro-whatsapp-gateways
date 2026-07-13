@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:grocery_app/core/network/dio_client.dart';
 import 'package:grocery_app/features/product_catalog/domain/entities/product.dart';
 import 'package:grocery_app/features/product_catalog/domain/entities/category.dart';
 import 'package:grocery_app/features/product_catalog/domain/repositories/product_repository.dart';
 import 'package:grocery_app/features/product_catalog/domain/usecases/get_products_usecase.dart';
+import 'package:grocery_app/holmon/utils/myTheme.dart';
 import 'package:grocery_app/main.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 
@@ -57,7 +59,7 @@ void main() {
     HydratedBloc.storage = MockStorage();
   });
 
-  testWidgets('Grocery App Catalog smoke test', (WidgetTester tester) async {
+  testWidgets('Grocery App authenticated shell smoke test', (WidgetTester tester) async {
     final mockRepository = MockProductRepository();
     final getProductsUseCase = GetProductsUseCase(mockRepository);
 
@@ -65,6 +67,9 @@ void main() {
     await tester.pumpWidget(
       MyApp(
         getProductsUseCase: getProductsUseCase,
+        dioClient: DioClient(baseUrl: 'https://example.test'),
+        secureStorage: const FlutterSecureStorage(),
+        initialTheme: AppThemes.getThemeByKey('organic_green'),
         isAuthenticated: true,
       ),
     );
@@ -72,8 +77,9 @@ void main() {
     // Trigger initial frame loads
     await tester.pump();
 
-    // Verify AppBar title is rendered
-    expect(find.text('FreshCart Catalog'), findsOneWidget);
-    expect(find.text('Infinite Scroll & Clean Architecture'), findsOneWidget);
+    // Verify the authenticated home shell is rendered.
+    expect(find.text('Welcome back,'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Cart'), findsOneWidget);
   });
 }

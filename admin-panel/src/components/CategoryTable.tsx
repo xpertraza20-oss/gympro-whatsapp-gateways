@@ -10,7 +10,7 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { getSwal, showToast } from '../utils/alerts';
-import { getBackendUrl } from '../utils/config';
+import { getAdminHeaders, getBackendUrl } from '../utils/config';
 
 interface Category {
   id: number;
@@ -35,8 +35,6 @@ export default function CategoryTable() {
   const [editingName, setEditingName] = useState('');
   const [editingSlug, setEditingSlug] = useState('');
   const [editingImageUrl, setEditingImageUrl] = useState('');
-
-  const AUTH_TOKEN = 'admin-secret-token';
 
   // Fetch categories from backend
   const fetchCategories = async () => {
@@ -82,10 +80,7 @@ export default function CategoryTable() {
     try {
       const res = await fetch(`${getBackendUrl()}/api/v1/admin/categories`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${AUTH_TOKEN}`
-        },
+        headers: getAdminHeaders(true),
         body: JSON.stringify({
           name: newName,
           slug: newSlug,
@@ -138,9 +133,7 @@ export default function CategoryTable() {
       try {
         const res = await fetch(`${getBackendUrl()}/api/v1/admin/categories/${id}`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${AUTH_TOKEN}`
-          }
+          headers: getAdminHeaders()
         });
 
         const json = await res.json();
@@ -192,10 +185,7 @@ export default function CategoryTable() {
     try {
       const res = await fetch(`${getBackendUrl()}/api/v1/admin/categories/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${AUTH_TOKEN}`
-        },
+        headers: getAdminHeaders(true),
         body: JSON.stringify({
           name: editingName,
           slug: editingSlug,
@@ -230,7 +220,7 @@ export default function CategoryTable() {
   return (
     <div className="space-y-6">
       {/* Top Banner Controls */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border-card bg-panel p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl glass-panel p-5 float-card shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
             <FolderOpen className="h-5.5 w-5.5 text-emerald-400" />
@@ -249,9 +239,10 @@ export default function CategoryTable() {
 
       {/* Add New Category Panel */}
       {isAdding && (
-        <form onSubmit={handleAddCategory} className="rounded-2xl border border-border-card bg-panel p-5 space-y-4 max-w-2xl">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary">Create New Category</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleAddCategory} className="rounded-2xl glass-panel p-5 space-y-4 max-w-2xl float-card shadow-lg relative overflow-hidden">
+          <div className="mesh-glow-orb right-0 top-0 h-32 w-32 bg-emerald-500/10" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-text-primary relative z-10">Create New Category</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
             <div>
               <label className="block text-xs font-semibold text-text-secondary uppercase mb-1.5">Category Name *</label>
               <input
@@ -285,7 +276,7 @@ export default function CategoryTable() {
               />
             </div>
           </div>
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2 justify-end relative z-10">
             <button
               type="button"
               onClick={() => setIsAdding(false)}
@@ -305,7 +296,7 @@ export default function CategoryTable() {
       )}
 
       {/* Categories Table */}
-      <div className="overflow-hidden rounded-2xl border border-border-card bg-panel shadow-md">
+      <div className="overflow-hidden rounded-2xl glass-panel shadow-xl float-card">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

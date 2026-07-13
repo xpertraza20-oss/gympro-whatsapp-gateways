@@ -14,7 +14,7 @@ import {
   User,
   X
 } from 'lucide-react';
-import { getBackendUrl, formatPrice } from '../utils/config';
+import { getAdminHeaders, getBackendUrl, formatPrice } from '../utils/config';
 import { getSwal, showToast } from '../utils/alerts';
 
 interface OrderItemDetails {
@@ -51,21 +51,14 @@ export default function OrdersTable() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-  const token = 'admin-secret-token';
-
-  // Fetch live orders from Render backend
+  // Fetch live orders from Cloudflare Worker backend
   const fetchOrders = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`${getBackendUrl()}/api/v1/admin/orders`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-Admin-Token': token,
-          'bypass-tunnel-reminder': 'true',
-          'Content-Type': 'application/json'
-        }
+        headers: getAdminHeaders(true)
       });
 
       if (!res.ok) {
@@ -142,12 +135,7 @@ export default function OrdersTable() {
       try {
         const res = await fetch(`${getBackendUrl()}/api/v1/admin/orders/${id}`, {
           method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-Admin-Token': token,
-            'bypass-tunnel-reminder': 'true',
-            'Content-Type': 'application/json'
-          },
+          headers: getAdminHeaders(true),
           body: JSON.stringify({ status: result.value })
         });
 
@@ -183,13 +171,13 @@ export default function OrdersTable() {
   const getStatusStyle = (status: Order['status']) => {
     switch (status) {
       case 'Pending':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+        return 'status-pill-amber';
       case 'Shipped':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+        return 'status-pill-blue';
       case 'Completed':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+        return 'status-pill-green';
       case 'Cancelled':
-        return 'bg-red-500/10 text-red-400 border-red-500/20';
+        return 'status-pill-red';
     }
   };
 
@@ -207,7 +195,7 @@ export default function OrdersTable() {
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border-card bg-panel p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl glass-panel p-5 float-card shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
             <ShoppingCart className="h-5.5 w-5.5 text-emerald-400" />
@@ -228,7 +216,7 @@ export default function OrdersTable() {
       </div>
 
       {/* Filter and Search Toolbar */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between rounded-2xl border border-border-card bg-panel p-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between rounded-2xl glass-panel p-4 float-card shadow-lg">
         {/* Search */}
         <div className="relative max-w-xs w-full">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -262,7 +250,7 @@ export default function OrdersTable() {
       </div>
 
       {/* Orders Table container */}
-      <div className="overflow-hidden rounded-2xl border border-border-card bg-panel shadow-md">
+      <div className="overflow-hidden rounded-2xl glass-panel shadow-xl float-card">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
             <RefreshCw className="h-8 w-8 text-emerald-400 animate-spin" />
@@ -366,7 +354,8 @@ export default function OrdersTable() {
       {/* ─── MODAL: ORDER DETAILS ────────────────────────────────────────── */}
       {isDetailsOpen && selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-2xl border border-border-card bg-panel p-6 shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[85vh] overflow-y-auto">
+          <div className="relative w-full max-w-lg rounded-2xl glass-panel p-6 shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[85vh] overflow-y-auto float-card">
+            <div className="mesh-glow-orb right-0 top-0 h-40 w-40 bg-emerald-500/10" />
             {/* Close */}
             <button
               onClick={() => {

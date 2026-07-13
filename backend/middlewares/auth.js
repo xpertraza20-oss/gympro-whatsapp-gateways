@@ -1,5 +1,12 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'grocery-app-super-secret-jwt-key';
+
+const getJwtSecret = () => {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET is required in production.');
+  }
+  return 'dev-only-grocery-jwt-secret';
+};
 
 /**
  * Middleware to enforce admin-only authorization.
@@ -9,8 +16,13 @@ const adminAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
   const adminHeaderToken = req.headers['x-admin-token'];
 
-  // Default to a fallback token if ADMIN_API_KEY is not defined in env
-  const expectedToken = process.env.ADMIN_API_KEY || 'admin-secret-token';
+  const expectedToken = process.env.ADMIN_API_KEY;
+
+  if (!expectedToken) {
+    const error = new Error('Server admin auth is not configured');
+    error.statusCode = 500;
+    return next(error);
+  }
 
   const isAuthorized =
     (authHeader && authHeader === `Bearer ${expectedToken}`) ||
@@ -38,7 +50,7 @@ const authenticateUser = (req, res, next) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
     req.user = decoded; // Contains user id and phoneNumber
     next();
   } catch (err) {

@@ -13,7 +13,7 @@ import {
   X,
   CheckCircle
 } from 'lucide-react';
-import { getBackendUrl } from '../utils/config';
+import { getAdminHeaders, getBackendUrl } from '../utils/config';
 import { getSwal, showToast } from '../utils/alerts';
 
 interface Customer {
@@ -42,21 +42,14 @@ export default function CustomerTable() {
   const [editPhone, setEditPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const token = 'admin-secret-token';
-
-  // Fetch live customers from Render backend
+  // Fetch live customers from Cloudflare Worker backend
   const fetchCustomers = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`${getBackendUrl()}/api/v1/admin/users?limit=100`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-Admin-Token': token,
-          'bypass-tunnel-reminder': 'true',
-          'Content-Type': 'application/json'
-        }
+        headers: getAdminHeaders(true)
       });
 
       if (!res.ok) {
@@ -90,7 +83,7 @@ export default function CustomerTable() {
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const year = d.getFullYear();
       return `${day}-${month}-${year}`;
-    } catch (e) {
+    } catch {
       return dateStr;
     }
   };
@@ -148,12 +141,7 @@ export default function CustomerTable() {
     try {
       const res = await fetch(`${getBackendUrl()}/api/v1/admin/users/${selectedCustomer.id}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-Admin-Token': token,
-          'bypass-tunnel-reminder': 'true',
-          'Content-Type': 'application/json'
-        },
+        headers: getAdminHeaders(true),
         body: JSON.stringify({
           name: editName,
           email: editEmail,
@@ -208,11 +196,7 @@ export default function CustomerTable() {
       try {
         const res = await fetch(`${getBackendUrl()}/api/v1/admin/users/${id}`, {
           method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-Admin-Token': token,
-            'bypass-tunnel-reminder': 'true'
-          }
+          headers: getAdminHeaders()
         });
 
         const json = await res.json();
@@ -242,7 +226,7 @@ export default function CustomerTable() {
   return (
     <div className="space-y-6">
       {/* Top Header Section */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border-card bg-panel p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl glass-panel p-5 float-card shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
             <Users className="h-5.5 w-5.5 text-emerald-400" />
@@ -263,7 +247,7 @@ export default function CustomerTable() {
       </div>
 
       {/* Filter and Search Toolbar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border-card bg-panel p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl glass-panel p-4 float-card shadow-lg">
         <div className="relative max-w-xs w-full">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <Search className="h-4 w-4 text-text-secondary" />
@@ -282,7 +266,7 @@ export default function CustomerTable() {
       </div>
 
       {/* Customers Table Container */}
-      <div className="overflow-hidden rounded-2xl border border-border-card bg-panel shadow-md">
+      <div className="overflow-hidden rounded-2xl glass-panel shadow-xl float-card">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
             <RefreshCw className="h-8 w-8 text-emerald-400 animate-spin" />

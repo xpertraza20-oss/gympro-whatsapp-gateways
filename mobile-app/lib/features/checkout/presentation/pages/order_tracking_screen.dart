@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/order_bloc.dart';
@@ -54,18 +54,20 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color(0xFF006E2F);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('Track Order #${widget.orderId}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: primaryColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: BlocBuilder<OrderBloc, OrderState>(
         builder: (context, state) {
           if (state is OrderLoading && state is! OrderTrackingLoaded) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF10B981)));
+            return const Center(child: CircularProgressIndicator(color: primaryColor));
           }
 
           if (state is OrderError) {
@@ -82,7 +84,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     ElevatedButton(
                       onPressed: _fetchStatus,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF10B981),
+                        backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('Retry'),
@@ -105,7 +107,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               onRefresh: () async {
                 _fetchStatus();
               },
-              color: const Color(0xFF10B981),
+              color: primaryColor,
               child: ListView(
                 padding: const EdgeInsets.all(24.0),
                 children: [
@@ -145,7 +147,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                             const Text('Amount to Pay', style: TextStyle(color: Colors.grey, fontSize: 14)),
                             Text(
                               'Rs. ${totalAmount.toStringAsFixed(2)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF10B981)),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: primaryColor),
                             ),
                           ],
                         ),
@@ -202,7 +204,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         Navigator.popUntil(context, (route) => route.isFirst);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF10B981),
+                        backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         elevation: 0,
@@ -231,8 +233,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }) {
     final isDone = activeStep >= index;
     final isCurrent = activeStep == index;
+    const primaryColor = Color(0xFF006E2F);
     final color = isDone 
-        ? const Color(0xFF10B981) 
+        ? primaryColor 
         : Colors.grey.shade300;
 
     return Row(
@@ -245,7 +248,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: isDone ? const Color(0xFFECFDF5) : Colors.white,
+                color: isDone ? const Color(0xFFE8F5E9) : Colors.white,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: color,
@@ -255,14 +258,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               child: Icon(
                 icon,
                 size: 18,
-                color: isDone ? const Color(0xFF10B981) : Colors.grey,
+                color: isDone ? primaryColor : Colors.grey,
               ),
             ),
             if (!isLast)
               Container(
                 width: 2,
                 height: 50,
-                color: isDone && activeStep > index ? const Color(0xFF10B981) : Colors.grey.shade200,
+                color: isDone && activeStep > index ? primaryColor : Colors.grey.shade200,
               ),
           ],
         ),

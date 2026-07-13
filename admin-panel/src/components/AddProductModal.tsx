@@ -36,6 +36,7 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
   const [compressionStats, setCompressionStats] = useState<CompressionResult | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState('');
   
   // Pipeline/Network status state
   const [isUploading, setIsUploading] = useState(false);
@@ -89,10 +90,10 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const swal = getSwal();
-    if (!compressedImage) {
+    if (!compressedImage && !imageUrl) {
       swal.fire({
         title: 'Missing Image',
-        text: 'Please select and compress an image first.',
+        text: 'Please select an image file or paste an Image URL.',
         icon: 'warning'
       });
       return;
@@ -142,7 +143,8 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
           price: priceNum,
           unit,
           category,
-          stock: stockNum
+          stock: stockNum,
+          image_url: imageUrl
         },
         (progress: PipelineProgressEvent) => {
           // Update visual checklist
@@ -192,6 +194,7 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
     setStock('10');
     setCompressedImage(null);
     setCompressionStats(null);
+    setImageUrl('');
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -362,6 +365,25 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
                     </div>
                   )}
                 </div>
+              </div>
+              <div className="mt-3">
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5 font-sans">
+                  Or Paste Public Image URL
+                </label>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    if (e.target.value.trim()) {
+                      setPreviewUrl(e.target.value.trim());
+                      setCompressedImage(null);
+                    }
+                  }}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full rounded-xl bg-bg-input border border-border-card px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-emerald-500 transition-colors"
+                  disabled={isUploading}
+                />
               </div>
             </div>
 
