@@ -82,18 +82,33 @@ const initializeDatabase = async () => {
     await client.query(alterUsersAddEmail);
     console.log('Users table schema migration completed.');
 
-    // 2.1.1b Alter orders table to add cancel_reason column if not exists
-    const alterOrdersAddCancelReason = `
+    // 2.1.1b Alter orders table to add cancel_reason, shop_id, rider_id columns if not exists
+    const alterOrdersAddColumns = `
       DO $$
       BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='cancel_reason') THEN
           ALTER TABLE orders ADD COLUMN cancel_reason TEXT;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='shop_id') THEN
+          ALTER TABLE orders ADD COLUMN shop_id INTEGER;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='rider_id') THEN
+          ALTER TABLE orders ADD COLUMN rider_id INTEGER;
+        END IF;
       END
       $$;
     `;
-    await client.query(alterOrdersAddCancelReason);
-    console.log('Orders table cancel_reason migration completed.');
+    await client.query(alterOrdersAddColumns);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS order_status_history (
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+        status VARCHAR(50) NOT NULL,
+        changed_by VARCHAR(100) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('Orders table verification columns and order_status_history checked/migrated.');
 
     // 2.1.2 Ensure the UNIQUE index on users.email exists
     // (ALTER TABLE ADD COLUMN doesn't add a constraint automatically on existing tables)
@@ -258,6 +273,72 @@ const initializeDatabase = async () => {
     `;
     await client.query(cleanBlobImagesQuery);
     console.log('Temporary blob URLs cleaned up in products table.');
+
+    // 7. Alter shops and riders tables to add approval/verification columns if they do not exist
+    const alterTablesQuery = `
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='shops') THEN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shops' AND column_name='is_approved') THEN
+            ALTER TABLE shops ADD COLUMN is_approved BOOLEAN DEFAULT false;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shops' AND column_name='approval_status') THEN
+            ALTER TABLE shops ADD COLUMN approval_status VARCHAR(50) DEFAULT 'pending';
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shops' AND column_name='approved_by') THEN
+            ALTER TABLE shops ADD COLUMN approved_by VARCHAR(255);
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shops' AND column_name='approved_at') THEN
+            ALTER TABLE shops ADD COLUMN approved_at TIMESTAMP WITH TIME ZONE;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shops' AND column_name='rejection_reason') THEN
+            ALTER TABLE shops ADD COLUMN rejection_reason TEXT;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shops' AND column_name='suspension_reason') THEN
+            ALTER TABLE shops ADD COLUMN suspension_reason TEXT;
+          END IF;
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='riders') THEN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='riders' AND column_name='verification_status') THEN
+            ALTER TABLE riders ADD COLUMN verification_status VARCHAR(50) DEFAULT 'pending';
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='riders' AND column_name='approved_by') THEN
+            ALTER TABLE riders ADD COLUMN approved_by VARCHAR(255);
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='riders' AND column_name='approved_at') THEN
+            ALTER TABLE riders ADD COLUMN approved_at TIMESTAMP WITH TIME ZONE;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='riders' AND column_name='rejection_reason') THEN
+            ALTER TABLE riders ADD COLUMN rejection_reason TEXT;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='riders' AND column_name='suspension_reason') THEN
+            ALTER TABLE riders ADD COLUMN suspension_reason TEXT;
+          END IF;
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='products') THEN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='approval_status') THEN
+            ALTER TABLE products ADD COLUMN approval_status VARCHAR(50) DEFAULT 'approved';
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='approved_by') THEN
+            ALTER TABLE products ADD COLUMN approved_by VARCHAR(255);
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='approved_at') THEN
+            ALTER TABLE products ADD COLUMN approved_at TIMESTAMP WITH TIME ZONE;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='rejection_reason') THEN
+            ALTER TABLE products ADD COLUMN rejection_reason TEXT;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='shop_id') THEN
+            ALTER TABLE products ADD COLUMN shop_id INTEGER;
+          END IF;
+        END IF;
+      END
+      $$;
+    `;
+    await client.query(alterTablesQuery);
+    console.log('Shops, Riders, and Products verification column migrations completed.');
 
     await client.query('COMMIT');
     console.log('Database initialization completed successfully.');

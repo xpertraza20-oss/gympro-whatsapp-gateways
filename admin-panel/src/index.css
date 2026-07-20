@@ -272,19 +272,24 @@ html, body {
   font-family: var(--font-sans);
 }
 
-/* Custom scrollbar aesthetics for dark theme */
+/* Thinned Scrollbar Aesthetics */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-input) transparent;
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-body);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-input);
-  border-radius: 4px;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -366,5 +371,71 @@ html, body {
   color: #60a5fa;
   border: 1px solid rgba(59, 130, 246, 0.25);
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.05);
+}
+
+/* SweetAlert2 Dynamic Theme Styling Overrides */
+.swal2-popup {
+  background: var(--bg-body) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-card) !important;
+  border-radius: 1.5rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+.swal2-title {
+  color: var(--text-primary) !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 800 !important;
+  font-size: 1.25rem !important;
+}
+
+.swal2-html-container {
+  color: var(--text-secondary) !important;
+  font-size: 0.875rem !important;
+}
+
+.swal2-select, .swal2-input, .swal2-textarea {
+  background: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border: 1.5px solid var(--border-input) !important;
+  border-radius: 0.75rem !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.875rem !important;
+  outline: none !important;
+  padding: 0.5rem 0.75rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.swal2-select:focus, .swal2-input:focus, .swal2-textarea:focus {
+  border-color: var(--accent-primary) !important;
+}
+
+.swal2-select option {
+  background: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+}
+
+.swal2-confirm {
+  background-color: var(--accent-primary) !important;
+  color: #ffffff !important;
+  border-radius: 0.75rem !important;
+  font-weight: 700 !important;
+  font-size: 0.875rem !important;
+}
+
+.swal2-cancel {
+  background-color: transparent !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-input) !important;
+  border-radius: 0.75rem !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+}
+
+.swal2-cancel:hover {
+  background-color: var(--hover-panel) !important;
+  color: var(--text-primary) !important;
 }
 

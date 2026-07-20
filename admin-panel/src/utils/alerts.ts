@@ -6,13 +6,65 @@ import Swal from 'sweetalert2';
  */
 export const getSwal = () => {
   const rootStyle = getComputedStyle(document.documentElement);
-  
+
   // Get active theme variables dynamically
-  const bgPanel = rootStyle.getPropertyValue('--bg-input').trim() || '#ffffff';
+  const bgPanel     = rootStyle.getPropertyValue('--bg-input').trim()    || '#ffffff';
   const textPrimary = rootStyle.getPropertyValue('--text-primary').trim() || '#0f172a';
-  const borderCard = rootStyle.getPropertyValue('--border-input').trim() || 'rgba(15, 23, 42, 0.08)';
+  const borderCard  = rootStyle.getPropertyValue('--border-input').trim() || 'rgba(15, 23, 42, 0.08)';
   const accentPrimary = rootStyle.getPropertyValue('--accent-primary').trim() || '#10b981';
   const textSecondary = rootStyle.getPropertyValue('--text-secondary').trim() || '#475569';
+  const bgBody      = rootStyle.getPropertyValue('--bg-body').trim()     || '#f8fafc';
+
+  // Inject/update a global style tag to fix SweetAlert select styling
+  const styleId = 'swal-theme-injected';
+  let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = styleId;
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = `
+    .swal2-popup {
+      border: 1px solid ${borderCard} !important;
+      font-family: 'Inter', system-ui, sans-serif !important;
+    }
+    .swal2-select,
+    .swal2-input,
+    .swal2-textarea {
+      background-color: ${bgPanel} !important;
+      color: ${textPrimary} !important;
+      border: 1px solid ${borderCard} !important;
+      border-radius: 0.75rem !important;
+      padding: 0.625rem 1rem !important;
+      font-size: 0.875rem !important;
+      width: 90% !important;
+      margin: 0.5rem auto !important;
+      display: block !important;
+      outline: none !important;
+      box-shadow: none !important;
+      transition: border-color 0.15s ease !important;
+    }
+    .swal2-select:focus,
+    .swal2-input:focus {
+      border-color: ${accentPrimary} !important;
+      box-shadow: 0 0 0 2px ${accentPrimary}22 !important;
+    }
+    .swal2-select option {
+      background-color: ${bgBody} !important;
+      color: ${textPrimary} !important;
+    }
+    .swal2-title {
+      color: ${textPrimary} !important;
+      font-weight: 700 !important;
+    }
+    .swal2-html-container {
+      color: ${textSecondary} !important;
+    }
+    .swal2-validation-message {
+      background: ${bgBody} !important;
+      color: #ef4444 !important;
+    }
+  `;
 
   return Swal.mixin({
     background: bgPanel,
@@ -21,7 +73,6 @@ export const getSwal = () => {
       popup: 'rounded-3xl border shadow-2xl font-sans p-6 max-w-sm',
       title: 'text-lg font-bold font-sans tracking-tight',
       htmlContainer: 'text-sm font-sans mt-2',
-      input: 'rounded-xl border px-4 py-2.5 text-sm focus:outline-none focus:ring-1 w-full max-w-xs inline-block text-center transition-all m-2',
       confirmButton: 'rounded-xl text-white px-5 py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer hover:brightness-110 active:scale-95 shadow-md focus:outline-none mx-1.5',
       cancelButton: 'rounded-xl bg-red-500 text-white px-5 py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer hover:brightness-110 active:scale-95 shadow-md shadow-red-500/10 focus:outline-none mx-1.5',
       denyButton: 'rounded-xl bg-slate-500 text-white px-5 py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer hover:brightness-110 active:scale-95 focus:outline-none mx-1.5'
@@ -29,10 +80,11 @@ export const getSwal = () => {
     buttonsStyling: false,
     didOpen: (popup) => {
       popup.style.borderColor = borderCard;
-      
+      popup.style.backgroundColor = bgPanel;
+
       const titleEl = popup.querySelector('.swal2-title') as HTMLElement;
       if (titleEl) titleEl.style.color = textPrimary;
-      
+
       const htmlEl = popup.querySelector('.swal2-html-container') as HTMLElement;
       if (htmlEl) htmlEl.style.color = textSecondary;
 
@@ -41,21 +93,24 @@ export const getSwal = () => {
         confirmBtn.style.backgroundColor = accentPrimary;
         confirmBtn.style.boxShadow = `0 4px 12px ${accentPrimary}25`;
       }
-      
-      const inputEl = popup.querySelector('.swal2-input') as HTMLInputElement | HTMLSelectElement;
-      if (inputEl) {
+
+      // Style all input/select/textarea elements
+      const inputEls = popup.querySelectorAll<HTMLElement>('.swal2-input, .swal2-select, .swal2-textarea');
+      inputEls.forEach(inputEl => {
         inputEl.style.backgroundColor = bgPanel;
         inputEl.style.color = textPrimary;
         inputEl.style.borderColor = borderCard;
         inputEl.style.outline = 'none';
-        
-        // Custom styling for option list options inside select
-        const options = inputEl.querySelectorAll('option');
-        options.forEach(opt => {
-          opt.style.backgroundColor = bgPanel;
-          opt.style.color = textPrimary;
-        });
-      }
+
+        // Style option elements for selects
+        if (inputEl.tagName === 'SELECT') {
+          const options = inputEl.querySelectorAll('option');
+          options.forEach(opt => {
+            opt.style.backgroundColor = bgBody;
+            opt.style.color = textPrimary;
+          });
+        }
+      });
     }
   });
 };

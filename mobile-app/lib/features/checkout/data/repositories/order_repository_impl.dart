@@ -40,4 +40,38 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<void> deleteOrder(int id) async {
     await remoteDataSource.deleteOrder(id);
   }
+
+  @override
+  Future<Map<String, dynamic>> updateShopkeeperOrderStatus(int orderId, String action) async {
+    return await remoteDataSource.updateShopkeeperOrderStatus(orderId, action);
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateRiderOrderStatus(int orderId, String action) async {
+    return await remoteDataSource.updateRiderOrderStatus(orderId, action);
+  }
+
+  @override
+  Future<List<dynamic>> getOrderHistoryTimeline(int orderId) async {
+    return await remoteDataSource.fetchOrderHistoryTimeline(orderId);
+  }
+
+  @override
+  Future<Map<String, dynamic>> requestCodApproval({
+    required int orderId,
+    required double amount,
+  }) async {
+    return await remoteDataSource.requestCodApproval(orderId: orderId, amount: amount);
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getCodApprovalStatus(int orderId) async {
+    return await remoteDataSource.fetchCodApprovalStatus(orderId);
+  }
+
+  @override
+  Future<double> getRiderCodLimit() async {
+    return await remoteDataSource.fetchRiderCodLimit();
+  }
 }
+

@@ -249,67 +249,74 @@ class _ProfileState extends State<Profile> {
                     onPress: () {
                       Get.dialog(
                         Dialog(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           child: Container(
                             padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const SizedBox(height: 8),
-                                Text(
-                                  "Made With ❤️ By #${AppConstants.projectOwnerName}",
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.normal),
-                                ),
-                                Lottie.asset(
-                                  Assets.imagesCatThinking,
-                                  addRepaintBoundary: true,
-                                  width: 300,
-                                  repeat: false,
-                                  decoder: customDecoder,
-                                ),
-                                const Text(
-                                  "Rate our app",
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                                const SizedBox(height: 14),
-                                RatingBar.builder(
-                                  initialRating: 5,
-                                  minRating: 1,
-                                  direction: Axis.horizontal,
-                                  allowHalfRating: true,
-                                  itemCount: 5,
-                                  itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                  itemBuilder: (context, _) => const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
+                            constraints: const BoxConstraints(maxHeight: 560),
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    "Made With ❤️ By #${AppConstants.projectOwnerName}",
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.normal),
                                   ),
-                                  onRatingUpdate: (rating) {
-                                    print(rating);
-                                  },
-                                ),
-                                const SizedBox(height: 14),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 1,
-                                      child: ElevatedButton(
-                                        onPressed: () async => {
-                                          await Get.to(() => FlutterEmailSender.send(email))
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: primaryColor,
-                                        ),
-                                        child: const Text(
-                                          "Email us",
-                                          style: TextStyle(
-                                              fontSize: 14, color: Colors.white),
+                                  Lottie.asset(
+                                    Assets.imagesCatThinking,
+                                    addRepaintBoundary: true,
+                                    width: 240,
+                                    height: 180,
+                                    repeat: false,
+                                    decoder: customDecoder,
+                                  ),
+                                  const Text(
+                                    "Rate our app",
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  RatingBar.builder(
+                                    initialRating: 5,
+                                    minRating: 1,
+                                    direction: Axis.horizontal,
+                                    allowHalfRating: true,
+                                    itemCount: 5,
+                                    itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                    itemBuilder: (context, _) => const Icon(
+                                      Icons.star,
+                                      color: Colors.amber,
+                                    ),
+                                    onRatingUpdate: (rating) {
+                                      print(rating);
+                                    },
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 1,
+                                        child: ElevatedButton(
+                                          onPressed: () async => {
+                                            await Get.to(() => FlutterEmailSender.send(email))
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: primaryColor,
+                                          ),
+                                          child: const Text(
+                                            "Email us",
+                                            style: TextStyle(
+                                                fontSize: 14, color: Colors.white),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
+                              ),
                             ),
                           ),
                         ),

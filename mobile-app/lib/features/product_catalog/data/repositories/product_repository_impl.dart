@@ -28,4 +28,27 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<List<Category>> getCategories() async {
     return await remoteDataSource.fetchCategories();
   }
+
+  @override
+  Future<Product> createProduct({
+    required String title,
+    required String description,
+    required double price,
+    required double? salePrice,
+    required String unit,
+    required int stockQuantity,
+    required int? categoryId,
+    required String? imageUrl,
+  }) async {
+    return await remoteDataSource.createProduct(
+      title: title,
+      description: description,
+      price: price,
+      salePrice: salePrice,
+      unit: unit,
+      stockQuantity: stockQuantity,
+      categoryId: categoryId,
+      imageUrl: imageUrl,
+    );
+  }
 }

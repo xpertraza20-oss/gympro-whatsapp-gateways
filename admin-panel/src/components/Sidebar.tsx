@@ -8,7 +8,11 @@ import {
   X,
   Apple,
   FolderOpen,
-  LogOut
+  LogOut,
+  Store,
+  ShieldCheck,
+  CheckSquare,
+  ShieldAlert
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,6 +32,15 @@ export default function Sidebar({ isOpen, onClose, currentTab, setCurrentTab }: 
         { id: 'products', label: 'Products', icon: ShoppingBag },
         { id: 'categories', label: 'Categories', icon: FolderOpen },
         { id: 'orders', label: 'Orders', icon: ShoppingCart },
+      ]
+    },
+    {
+      title: 'Verification & Approvals',
+      items: [
+        { id: 'shop_approvals', label: 'Shop Approvals', icon: Store },
+        { id: 'rider_verification', label: 'Rider Verification', icon: ShieldCheck },
+        { id: 'product_approvals', label: 'Product Approvals', icon: CheckSquare },
+        { id: 'cod_approvals', label: 'COD Approvals', icon: ShieldAlert },
       ]
     },
     {

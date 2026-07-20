@@ -1,18 +1,48 @@
 import 'package:flutter/material.dart';
 import 'order_tracking_screen.dart';
 
-class OrderSuccessScreen extends StatelessWidget {
+class OrderSuccessScreen extends StatefulWidget {
   final Map<String, dynamic> order;
 
   const OrderSuccessScreen({super.key, required this.order});
 
   @override
+  State<OrderSuccessScreen> createState() => _OrderSuccessScreenState();
+}
+
+class _OrderSuccessScreenState extends State<OrderSuccessScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animCtrl;
+  late Animation<double> _scaleAnim;
+
+  static const _primaryColor = Color(0xFF006E2F);
+  static const _primaryLight = Color(0xFF00A651);
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _scaleAnim = CurvedAnimation(
+      parent: _animCtrl,
+      curve: Curves.elasticOut,
+    );
+    _animCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final orderId = order['id'] ?? 0;
-    final totalAmount = order['total_amount'] is num 
-        ? (order['total_amount'] as num).toDouble() 
-        : double.tryParse(order['total_amount']?.toString() ?? '') ?? 0.0;
-    const primaryColor = Color(0xFF006E2F);
+    final orderId = widget.order['id'] ?? '1029';
+    final totalAmount = widget.order['total_amount'] is num 
+        ? (widget.order['total_amount'] as num).toDouble() 
+        : double.tryParse(widget.order['total_amount']?.toString() ?? '') ?? 0.0;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -24,64 +54,78 @@ class OrderSuccessScreen extends StatelessWidget {
             children: [
               const Spacer(),
 
-              // Success Icon / Animation Circle
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xffC8E6C9), width: 4),
-                ),
-                child: const Icon(
-                  Icons.check_circle_rounded,
-                  color: primaryColor,
-                  size: 80,
+              // Animated Success Circle
+              ScaleTransition(
+                scale: _scaleAnim,
+                child: Container(
+                  width: 130,
+                  height: 130,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_primaryColor, _primaryLight],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _primaryColor.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_outline_rounded,
+                    color: Colors.white,
+                    size: 80,
+                  ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 36),
 
-              // Title
+              // Title Congratulatory
               const Text(
-                'Order Placed Successfully!',
+                'Order Placed!',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
                   color: Color(0xFF1F2937),
                   letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: 12),
 
-              // Subtitle
-              Text(
-                'Thank you for shopping with FreshCart. Your order has been placed and is being processed.',
+              // Congratulatory Message
+              const Text(
+                'Your order is sent to the shop!\nThank you for shopping with Go Fast Grocery.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
+                  fontSize: 15,
+                  color: Color(0xFF6B7280),
                   height: 1.5,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 40),
 
-              // Invoice detail summary card
+              // Details invoice card
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade100),
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFF3F4F6)),
                 ),
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Order ID', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                        const Text('Order ID', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14, fontWeight: FontWeight.w500)),
                         Text(
-                          '#$orderId',
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F2937), fontSize: 14),
+                          '#GFG-$orderId',
+                          style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1F2937), fontSize: 14),
                         ),
                       ],
                     ),
@@ -89,23 +133,23 @@ class OrderSuccessScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Payment Mode', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                        const Text('Payment Mode', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14, fontWeight: FontWeight.w500)),
                         Text(
-                          order['payment_method'] ?? 'COD',
+                          widget.order['payment_method'] ?? 'Cash on Delivery (COD)',
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F2937), fontSize: 14),
                         ),
                       ],
                     ),
-                    const Divider(height: 24),
+                    const Divider(height: 24, color: Color(0xFFE5E7EB)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Total Bill Paid', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                        const Text('Grand Total', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14, fontWeight: FontWeight.w500)),
                         Text(
                           'Rs. ${totalAmount.toStringAsFixed(2)}',
                           style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: primaryColor,
+                            fontWeight: FontWeight.w900,
+                            color: _primaryColor,
                             fontSize: 16,
                           ),
                         ),
@@ -120,24 +164,26 @@ class OrderSuccessScreen extends StatelessWidget {
               // Action buttons
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 54,
                 child: ElevatedButton(
                   onPressed: () {
+                    final dynamic idVal = widget.order['id'];
+                    final parsedId = idVal is int ? idVal : (int.tryParse(idVal?.toString() ?? '') ?? 1029);
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => OrderTrackingScreen(orderId: orderId),
+                        builder: (context) => OrderTrackingScreen(orderId: parsedId),
                       ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
+                    backgroundColor: _primaryColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
                     elevation: 0,
                   ),
                   child: const Text(
-                    'Track My Order',
+                    'Track Order',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -145,20 +191,21 @@ class OrderSuccessScreen extends StatelessWidget {
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 54,
                 child: TextButton(
                   onPressed: () {
+                    // Navigate back to CustomerDashboard (which is the first route in root)
                     Navigator.popUntil(context, (route) => route.isFirst);
                   },
                   style: TextButton.styleFrom(
-                    foregroundColor: primaryColor,
+                    foregroundColor: _primaryColor,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: primaryColor, width: 1.5),
+                      borderRadius: BorderRadius.circular(28),
+                      side: const BorderSide(color: _primaryColor, width: 1.5),
                     ),
                   ),
                   child: const Text(
-                    'Back to Shopping',
+                    'Back to Home',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),

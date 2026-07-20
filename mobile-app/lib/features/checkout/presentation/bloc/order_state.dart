@@ -66,3 +66,76 @@ class OrderDeleteSuccess extends OrderState {
   @override
   List<Object?> get props => [orderId, message];
 }
+
+class ShopkeeperOrdersLoaded extends OrderState {
+  final List<dynamic> orders;
+
+  const ShopkeeperOrdersLoaded(this.orders);
+
+  @override
+  List<Object?> get props => [orders];
+}
+
+class OrderAcceptedSuccess extends OrderState {
+  final String orderId;
+  final int prepTimeMinutes;
+
+  const OrderAcceptedSuccess({required this.orderId, required this.prepTimeMinutes});
+
+  @override
+  List<Object?> get props => [orderId, prepTimeMinutes];
+}
+
+class FindingRiderProgress extends OrderState {
+  final String orderId;
+
+  const FindingRiderProgress(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}
+
+class FindingRiderSuccess extends OrderState {
+  final String orderId;
+
+  const FindingRiderSuccess(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}
+
+class AdminApprovalProgress extends OrderState {
+  final String orderId;
+
+  const AdminApprovalProgress(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}
+
+class AdminApprovalSuccess extends OrderState {
+  final String orderId;
+
+  const AdminApprovalSuccess(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}
+
+class DeliveryTripStarted extends OrderState {
+  final String orderId;
+
+  const DeliveryTripStarted(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}
+
+class DeliveryCompletedSuccess extends OrderState {
+  final String orderId;
+
+  const DeliveryCompletedSuccess(this.orderId);
+
+  @override
+  List<Object?> get props => [orderId];
+}

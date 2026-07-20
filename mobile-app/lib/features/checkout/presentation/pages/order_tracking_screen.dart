@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../../../core/services/location_broadcast_service.dart';
 import '../bloc/order_bloc.dart';
 import '../bloc/order_event.dart';
 import '../bloc/order_state.dart';
@@ -14,11 +18,22 @@ class OrderTrackingScreen extends StatefulWidget {
   State<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
 }
 
-class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
+class _OrderTrackingScreenState extends State<OrderTrackingScreen> with TickerProviderStateMixin {
   Timer? _pollingTimer;
   Map<String, dynamic>? _cachedOrder;
   String? _errorMessage;
   bool _isLoading = false;
+
+  StreamSubscription? _fbSubscription;
+  StreamSubscription? _localSubscription;
+  double _riderHeading = 0.0;
+  bool _isTrackingLive = false;
+
+  GoogleMapController? _mapController;
+  LatLng _riderLatLng = const LatLng(31.4800, 74.3200);
+  LatLng _oldRiderLatLng = const LatLng(31.4800, 74.3200);
+  LatLng _newRiderLatLng = const LatLng(31.4800, 74.3200);
+  AnimationController? _markerAnimController;
 
   @override
   void initState() {
@@ -33,6 +48,34 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     }
 
     _fetchStatus();
+    _startTracking();
+
+    _markerAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _markerAnimController!.addListener(() {
+      final t = _markerAnimController!.value;
+      final lat = (_newRiderLatLng.latitude - _oldRiderLatLng.latitude) * t + _oldRiderLatLng.latitude;
+      final lng = (_newRiderLatLng.longitude - _oldRiderLatLng.longitude) * t + _oldRiderLatLng.longitude;
+      if (!mounted) return;
+      setState(() {
+        _riderLatLng = LatLng(lat, lng);
+      });
+      
+      // Move camera to follow rider
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: _riderLatLng,
+            zoom: 15.5,
+            bearing: _riderHeading,
+          ),
+        ),
+      );
+    });
+
     // Setup polling every 8 seconds to sync status from server silently
     _pollingTimer = Timer.periodic(const Duration(seconds: 8), (timer) {
       _fetchStatus();
@@ -42,7 +85,223 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    _fbSubscription?.cancel();
+    _localSubscription?.cancel();
+    _markerAnimController?.dispose();
+    _mapController?.dispose();
     super.dispose();
+  }
+
+  void _startTracking() {
+    final orderIdStr = widget.orderId.toString();
+
+    // 1. Listen to Local Stream fallback for single-device simulator testing
+    _localSubscription = LocationBroadcastService().onLocalLocationChanged.listen((coords) {
+      final double lat = coords['latitude'] ?? _riderLatLng.latitude;
+      final double lng = coords['longitude'] ?? _riderLatLng.longitude;
+      final double heading = coords['heading'] ?? _riderHeading;
+      _onLocationReceived(lat, lng, heading);
+    });
+
+    // 2. Listen to Firebase Realtime Database
+    try {
+      _fbSubscription = FirebaseDatabase.instance
+          .ref('active_deliveries/$orderIdStr/rider_location')
+          .onValue
+          .listen((event) {
+        final data = event.snapshot.value as Map?;
+        if (data != null) {
+          final double lat = (data['latitude'] as num?)?.toDouble() ?? _riderLatLng.latitude;
+          final double lng = (data['longitude'] as num?)?.toDouble() ?? _riderLatLng.longitude;
+          final double heading = (data['heading'] as num?)?.toDouble() ?? _riderHeading;
+          _onLocationReceived(lat, lng, heading);
+        }
+      }, onError: (e) {
+        debugPrint("OrderTrackingScreen: Firebase subscription error: $e");
+      });
+    } catch (e) {
+      debugPrint("OrderTrackingScreen: Firebase connection error: $e");
+    }
+  }
+
+  void _onLocationReceived(double lat, double lng, double heading) {
+    if (!mounted) return;
+    setState(() {
+      _riderHeading = heading;
+      _isTrackingLive = true;
+      _oldRiderLatLng = _riderLatLng;
+      _newRiderLatLng = LatLng(lat, lng);
+    });
+    _markerAnimController?.forward(from: 0.0);
+  }
+
+  Set<Marker> _getMarkers(double shopLat, double shopLng, double customerLat, double customerLng) {
+    return {
+      Marker(
+        markerId: const MarkerId('shop'),
+        position: LatLng(shopLat, shopLng),
+        infoWindow: const InfoWindow(title: 'Al-Fatah Store (Pickup)'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+      ),
+      Marker(
+        markerId: const MarkerId('customer'),
+        position: LatLng(customerLat, customerLng),
+        infoWindow: const InfoWindow(title: 'Your Address (Drop-off)'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      ),
+      Marker(
+        markerId: const MarkerId('rider'),
+        position: _riderLatLng,
+        rotation: _riderHeading,
+        flat: true,
+        infoWindow: const InfoWindow(title: 'Delivery Rider'),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+      ),
+    };
+  }
+
+  Set<Polyline> _getPolylines(double shopLat, double shopLng, double customerLat, double customerLng) {
+    return {
+      Polyline(
+        polylineId: const PolylineId('route'),
+        points: [
+          LatLng(shopLat, shopLng),
+          _riderLatLng,
+          LatLng(customerLat, customerLng),
+        ],
+        color: const Color(0xFF006E2F),
+        width: 5,
+      ),
+    };
+  }
+
+  Widget _buildLiveMapSection() {
+    // Max distance from shop to customer is approx 0.0108
+    const double maxDistance = 0.0108;
+    double dx = 31.4890 - _riderLatLng.latitude;
+    double dy = 74.3260 - _riderLatLng.longitude;
+    double distanceRemaining = math.sqrt(dx * dx + dy * dy);
+    double progress = 1.0 - (distanceRemaining / maxDistance).clamp(0.0, 1.0);
+    int etaMinutes = ((1.0 - progress) * 12).round() + 2;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Actual Google Maps Live tracking view
+        Container(
+          height: 220,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200, width: 1),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+             children: [
+               GoogleMap(
+                 initialCameraPosition: CameraPosition(
+                   target: _riderLatLng,
+                   zoom: 15.5,
+                 ),
+                 markers: _getMarkers(31.4800, 74.3200, 31.4890, 74.3260),
+                 polylines: _getPolylines(31.4800, 74.3200, 31.4890, 74.3260),
+                 onMapCreated: (GoogleMapController controller) {
+                   _mapController = controller;
+                 },
+                 myLocationButtonEnabled: false,
+                 zoomControlsEnabled: false,
+               ),
+               // Pulse live tracking label
+               Positioned(
+                 top: 12,
+                 left: 12,
+                 child: Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                   decoration: BoxDecoration(
+                     color: const Color(0xFF006E2F),
+                     borderRadius: BorderRadius.circular(20),
+                   ),
+                   child: const Row(
+                     mainAxisSize: MainAxisSize.min,
+                     children: [
+                       Icon(Icons.radar_rounded, color: Colors.white, size: 12),
+                       SizedBox(width: 4),
+                       Text(
+                         'LIVE TRACKING ACTIVE',
+                         style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                       ),
+                     ],
+                   ),
+                 ),
+               ),
+             ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Rider Info Bottom Card
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green.shade50.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.green.shade100.withOpacity(0.5)),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: const Color(0xFF006E2F).withOpacity(0.1),
+                child: const Icon(Icons.directions_bike_rounded, color: Color(0xFF006E2F), size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'DELIVERY PARTNER',
+                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF006E2F), letterSpacing: 0.5),
+                    ),
+                    const Text(
+                      'Zeeshan Khan (Demo Rider)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                    ),
+                    Text(
+                      'Bike: LE-7788 | Mobile: +92 300 987 6543',
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF006E2F),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      'ETA',
+                      style: TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      '$etaMinutes Min',
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
   }
 
   void _fetchStatus() {
@@ -50,18 +309,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   int _getStatusStep(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 0;
-      case 'confirmed':
-        return 1;
-      case 'dispatched':
-        return 2;
-      case 'delivered':
-        return 3;
-      default:
-        return 0;
-    }
+    final s = status.toLowerCase();
+    if (s == 'pending') return 0;
+    if (s == 'accepted' || s == 'preparing' || s == 'ready_for_pickup') return 1;
+    if (s == 'rider_assigned' || s == 'picked_up' || s == 'on_the_way' || s == 'dispatched') return 2;
+    if (s == 'delivered') return 3;
+    return 0;
   }
 
   @override
@@ -79,9 +332,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       body: BlocListener<OrderBloc, OrderState>(
         listener: (context, state) {
           if (state is OrderLoading) {
-            setState(() {
-              _isLoading = true;
-            });
+            if (_cachedOrder == null) {
+              setState(() {
+                _isLoading = true;
+              });
+            }
           } else if (state is OrderTrackingLoaded && 
               (state.order['id'] == widget.orderId || 
                state.order['id'].toString() == widget.orderId.toString())) {
@@ -171,7 +426,46 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         ],
                       ),
                     ),
+                    if (currentStatus.toLowerCase() == 'cancelled') ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.red.shade100),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.cancel_rounded, color: Colors.redAccent, size: 20),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Order Cancelled',
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 14),
+                                ),
+                              ],
+                            ),
+                            if (order['cancel_reason'] != null && order['cancel_reason'].toString().isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                'Reason: ${order['cancel_reason']}',
+                                style: TextStyle(color: Colors.red.shade900, fontSize: 13, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 36),
+                    if (currentStatus.toLowerCase() == 'dispatched' ||
+                        currentStatus.toLowerCase() == 'rider_assigned' ||
+                        currentStatus.toLowerCase() == 'picked_up' ||
+                        currentStatus.toLowerCase() == 'on_the_way') ...[
+                      _buildLiveMapSection(),
+                    ],
 
                     // Timeline Steps
                     const Text(
@@ -243,7 +537,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     children: [
                       const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
                       const SizedBox(height: 12),
-                      Text('Failed to load tracking: $_errorMessage'),
+                      Text(
+                        _errorMessage!.contains('404') || _errorMessage!.toLowerCase().contains('not found')
+                            ? 'No tracking status details available.'
+                            : 'Failed to load tracking: $_errorMessage',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black87),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchStatus,
@@ -345,3 +645,4 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     );
   }
 }
+

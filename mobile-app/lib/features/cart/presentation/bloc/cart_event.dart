@@ -39,3 +39,16 @@ class UpdateQuantityEvent extends CartEvent {
 class ClearCartEvent extends CartEvent {
   const ClearCartEvent();
 }
+
+class ClearCartConflictEvent extends CartEvent {
+  const ClearCartConflictEvent();
+}
+
+class ClearAndAddEvent extends CartEvent {
+  final Product product;
+  const ClearAndAddEvent(this.product);
+
+  @override
+  List<Object?> get props => [product];
+}
+

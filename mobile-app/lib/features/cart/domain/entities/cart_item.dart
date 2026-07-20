@@ -33,6 +33,8 @@ class CartItem extends Equatable {
               category: product.category,
               imageUrl: product.imageUrl,
               stock: product.stock,
+              shopId: product.shopId,
+              shopName: product.shopName,
             ).toJson(),
       'quantity': quantity,
     };

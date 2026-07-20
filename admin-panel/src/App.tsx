@@ -9,6 +9,10 @@ import OrdersTable from './components/OrdersTable';
 import CustomerTable from './components/CustomerTable';
 import AnalyticsView from './components/AnalyticsView';
 import SettingsView from './components/SettingsView';
+import ShopApprovalsTable from './components/ShopApprovalsTable';
+import RiderVerificationTable from './components/RiderVerificationTable';
+import ProductApprovalTable from './components/ProductApprovalTable';
+import CodApprovalTable from './components/CodApprovalTable';
 import { saveProducts, type Product } from './utils/mockApi';
 import { getSwal, showToast } from './utils/alerts';
 import { getAdminHeaders, getBackendUrl, formatPrice } from './utils/config';
@@ -250,12 +254,8 @@ export default function App() {
     root.classList.remove(...themeClasses);
     root.classList.add(theme);
     
-    // Compatibility flag for 3rd party components
-    if (theme === 'theme-light-default') {
-      root.classList.add('light');
-    } else {
-      root.classList.add('dark');
-    }
+    // Compatibility flag for 3rd party components (all custom themes are light-translucent)
+    root.classList.add('light');
   }, [theme]);
 
   // Load products from backend (live/real-time)
@@ -621,6 +621,14 @@ export default function App() {
               })()
             ) : currentTab === 'orders' ? (
               <OrdersTable />
+            ) : currentTab === 'shop_approvals' ? (
+              <ShopApprovalsTable />
+            ) : currentTab === 'rider_verification' ? (
+              <RiderVerificationTable />
+            ) : currentTab === 'product_approvals' ? (
+              <ProductApprovalTable />
+            ) : currentTab === 'cod_approvals' ? (
+              <CodApprovalTable />
             ) : currentTab === 'customers' ? (
               <CustomerTable />
             ) : currentTab === 'analytics' ? (

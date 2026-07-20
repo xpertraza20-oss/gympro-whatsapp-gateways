@@ -21,6 +21,10 @@ class AuthRepositoryImpl implements AuthRepository {
       await secureStorage.write(key: 'user_phone', value: user['phone'] ?? '');
       await secureStorage.write(key: 'user_location', value: user['location'] ?? '');
     }
+    if (result['profile_status'] != null) {
+      final pStatus = result['profile_status'] as Map<String, dynamic>;
+      await secureStorage.write(key: 'profile_status', value: pStatus['status'] ?? 'complete');
+    }
   }
 
   @override
@@ -30,6 +34,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phone,
     required String location,
     required String password,
+    String? role,
   }) async {
     final result = await remoteDataSource.signup(
       name: name,
@@ -41,6 +46,9 @@ class AuthRepositoryImpl implements AuthRepository {
     if (result['token'] != null) {
       await saveToken(result['token'] as String);
     }
+    if (role != null) {
+      await secureStorage.write(key: 'user_role', value: role);
+    }
     await secureStorage.write(key: 'user_password', value: password);
     await _saveUserLocal(result);
     return result;
@@ -50,6 +58,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
+    String? role,
   }) async {
     final result = await remoteDataSource.login(
       email: email,
@@ -58,15 +67,25 @@ class AuthRepositoryImpl implements AuthRepository {
     if (result['token'] != null) {
       await saveToken(result['token'] as String);
     }
+    if (role != null) {
+      await secureStorage.write(key: 'user_role', value: role);
+    }
     await secureStorage.write(key: 'user_password', value: password);
     await _saveUserLocal(result);
     return result;
   }
 
   @override
-  Future<Map<String, dynamic>> verifyOtp({required String email, required String otp}) async {
+  Future<Map<String, dynamic>> verifyOtp({
+    required String email,
+    required String otp,
+    String? role,
+  }) async {
     final result = await remoteDataSource.verifyOtp(email: email, otp: otp);
     await saveToken(result['token'] as String);
+    if (role != null) {
+      await secureStorage.write(key: 'user_role', value: role);
+    }
     await _saveUserLocal(result);
     return result;
   }
@@ -82,6 +101,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<String?> getRole() async {
+    return await secureStorage.read(key: 'user_role');
+  }
+
+  @override
+  Future<String?> getProfileStatusString() async {
+    return await secureStorage.read(key: 'profile_status') ?? 'incomplete';
+  }
+
+  @override
   Future<void> clearToken() async {
     await secureStorage.delete(key: _tokenKey);
     await secureStorage.delete(key: 'user_name');
@@ -89,6 +118,8 @@ class AuthRepositoryImpl implements AuthRepository {
     await secureStorage.delete(key: 'user_phone');
     await secureStorage.delete(key: 'user_location');
     await secureStorage.delete(key: 'user_password');
+    await secureStorage.delete(key: 'user_role');
+    await secureStorage.delete(key: 'profile_status');
   }
 
   @override
@@ -114,5 +145,46 @@ class AuthRepositoryImpl implements AuthRepository {
     }
     await _saveUserLocal(result);
     return result;
+  }
+
+  @override
+  Future<Map<String, dynamic>> getProfileStatus() async {
+    return await remoteDataSource.getProfileStatus();
+  }
+
+  @override
+  Future<Map<String, dynamic>> registerShop({
+    required String shopName,
+    required String shopAddress,
+    required String mapLocation,
+    required String cnic,
+    required String openingTime,
+    required String closingTime,
+    String? imageUrl,
+  }) async {
+    return await remoteDataSource.registerShop(
+      shopName: shopName,
+      shopAddress: shopAddress,
+      mapLocation: mapLocation,
+      cnic: cnic,
+      openingTime: openingTime,
+      closingTime: closingTime,
+      imageUrl: imageUrl,
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>> registerRider({
+    required String vehicleType,
+    required String vehicleNumber,
+    required String cnic,
+    required String currentLocation,
+  }) async {
+    return await remoteDataSource.registerRider(
+      vehicleType: vehicleType,
+      vehicleNumber: vehicleNumber,
+      cnic: cnic,
+      currentLocation: currentLocation,
+    );
   }
 }

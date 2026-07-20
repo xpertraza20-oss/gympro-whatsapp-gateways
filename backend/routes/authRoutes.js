@@ -5,6 +5,7 @@ const {
   verifyOtp,
   requestOtp,          // legacy phone OTP
   updateProfile,
+  getProfileStatus,
 } = require('../controllers/authController');
 const { authenticateUser } = require('../middlewares/auth');
 
@@ -22,6 +23,9 @@ router.post('/verify-otp', verifyOtp);
 
 // PUT /api/v1/auth/profile       → name, phone, location → updates profile in DB
 router.put('/profile', authenticateUser, updateProfile);
+
+// GET /api/v1/auth/profile-status → checks profile completeness status
+router.get('/profile-status', authenticateUser, getProfileStatus);
 
 // ─── Legacy Phone OTP Route (kept for mobile client backward compatibility)
 // POST /api/v1/auth/request-otp  → phoneNumber → sends console OTP

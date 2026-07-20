@@ -9,6 +9,8 @@ class ProductModel extends Product {
     required super.category,
     required super.imageUrl,
     required super.stock,
+    super.shopId,
+    super.shopName,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,8 @@ class ProductModel extends Product {
       category: (json['category_name'] ?? json['category']) as String? ?? '',
       imageUrl: json['image_url'] as String? ?? '',
       stock: (json['stock_quantity'] ?? json['stock']) as int? ?? 0,
+      shopId: json['shop_id']?.toString() ?? '',
+      shopName: json['shop_name'] as String? ?? '',
     );
   }
 
@@ -34,6 +38,9 @@ class ProductModel extends Product {
       'category': category,
       'image_url': imageUrl,
       'stock': stock,
+      'shop_id': shopId,
+      'shop_name': shopName,
     };
   }
 }
+
