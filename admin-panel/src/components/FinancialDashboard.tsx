@@ -4,16 +4,13 @@ import { showToast } from '../utils/alerts';
 import {
   DollarSign,
   TrendingUp,
-  Wallet,
   Percent,
   Store,
   Bike,
-  Calendar,
   CheckCircle2,
   Clock,
   RefreshCcw,
   Sliders,
-  Award,
   CircleDollarSign,
 } from 'lucide-react';
 

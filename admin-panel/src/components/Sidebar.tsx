@@ -12,7 +12,8 @@ import {
   Store,
   ShieldCheck,
   CheckSquare,
-  ShieldAlert
+  ShieldAlert,
+  DollarSign
 } from 'lucide-react';
 
 interface SidebarProps {
