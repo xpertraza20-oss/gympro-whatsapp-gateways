@@ -334,11 +334,67 @@ const initializeDatabase = async () => {
             ALTER TABLE products ADD COLUMN shop_id INTEGER;
           END IF;
         END IF;
+
+        -- Add commission_percentage to shops table
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='shops') THEN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shops' AND column_name='commission_percentage') THEN
+            ALTER TABLE shops ADD COLUMN commission_percentage DECIMAL(5, 2) DEFAULT NULL;
+          END IF;
+        END IF;
       END
       $$;
     `;
     await client.query(alterTablesQuery);
     console.log('Shops, Riders, and Products verification column migrations completed.');
+
+    // Create Marketplace Financial Tables
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS system_settings (
+        key VARCHAR(255) PRIMARY KEY,
+        value VARCHAR(255) NOT NULL
+      );
+    `);
+    await client.query(`
+      INSERT INTO system_settings (key, value) VALUES ('global_commission_percentage', '10.00') ON CONFLICT (key) DO NOTHING;
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS commissions (
+        id SERIAL PRIMARY KEY,
+        order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE UNIQUE,
+        shop_id INTEGER,
+        gross_sales DECIMAL(10, 2) NOT NULL,
+        commission_percentage DECIMAL(5, 2) NOT NULL,
+        commission_amount DECIMAL(10, 2) NOT NULL,
+        shop_payable DECIMAL(10, 2) NOT NULL,
+        refunded_amount DECIMAL(10, 2) DEFAULT 0.00,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS shop_settlements (
+        id SERIAL PRIMARY KEY,
+        shop_id INTEGER,
+        sales_amount DECIMAL(10, 2) NOT NULL,
+        commission_amount DECIMAL(10, 2) NOT NULL,
+        payable_amount DECIMAL(10, 2) NOT NULL,
+        status VARCHAR(50) DEFAULT 'unpaid',
+        paid_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS rider_settlements (
+        id SERIAL PRIMARY KEY,
+        rider_id INTEGER,
+        deliveries_count INTEGER NOT NULL DEFAULT 0,
+        earnings_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+        cod_collected DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+        status VARCHAR(50) DEFAULT 'pending',
+        paid_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('Marketplace Financial Tables checked/created.');
 
     await client.query('COMMIT');
     console.log('Database initialization completed successfully.');

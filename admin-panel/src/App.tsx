@@ -13,6 +13,7 @@ import ShopApprovalsTable from './components/ShopApprovalsTable';
 import RiderVerificationTable from './components/RiderVerificationTable';
 import ProductApprovalTable from './components/ProductApprovalTable';
 import CodApprovalTable from './components/CodApprovalTable';
+import FinancialDashboard from './components/FinancialDashboard';
 import { saveProducts, type Product } from './utils/mockApi';
 import { getSwal, showToast } from './utils/alerts';
 import { getAdminHeaders, getBackendUrl, formatPrice } from './utils/config';
@@ -629,6 +630,8 @@ export default function App() {
               <ProductApprovalTable />
             ) : currentTab === 'cod_approvals' ? (
               <CodApprovalTable />
+            ) : currentTab === 'financials' ? (
+              <FinancialDashboard />
             ) : currentTab === 'customers' ? (
               <CustomerTable />
             ) : currentTab === 'analytics' ? (

@@ -48,6 +48,7 @@ export default function Sidebar({ isOpen, onClose, currentTab, setCurrentTab }: 
       items: [
         { id: 'customers', label: 'Customers', icon: Users },
         { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+        { id: 'financials', label: 'Financials', icon: DollarSign },
       ]
     },
     {

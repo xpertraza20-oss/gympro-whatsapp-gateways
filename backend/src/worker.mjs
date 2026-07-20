@@ -369,6 +369,65 @@ async function ensureSchema(env) {
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
       `);
+
+      // --- Marketplace Financial Tables ---
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS system_settings (
+          key VARCHAR(255) PRIMARY KEY,
+          value VARCHAR(255) NOT NULL
+        );
+      `);
+      await client.query(`
+        INSERT INTO system_settings (key, value) VALUES ('global_commission_percentage', '10.00') ON CONFLICT (key) DO NOTHING;
+      `);
+      await client.query(`
+        DO $$
+        BEGIN
+          IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='shops') THEN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='shops' AND column_name='commission_percentage') THEN
+              ALTER TABLE shops ADD COLUMN commission_percentage DECIMAL(5, 2) DEFAULT NULL;
+            END IF;
+          END IF;
+        END
+        $$;
+      `);
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS commissions (
+          id SERIAL PRIMARY KEY,
+          order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE UNIQUE,
+          shop_id INTEGER,
+          gross_sales DECIMAL(10, 2) NOT NULL,
+          commission_percentage DECIMAL(5, 2) NOT NULL,
+          commission_amount DECIMAL(10, 2) NOT NULL,
+          shop_payable DECIMAL(10, 2) NOT NULL,
+          refunded_amount DECIMAL(10, 2) DEFAULT 0.00,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS shop_settlements (
+          id SERIAL PRIMARY KEY,
+          shop_id INTEGER,
+          sales_amount DECIMAL(10, 2) NOT NULL,
+          commission_amount DECIMAL(10, 2) NOT NULL,
+          payable_amount DECIMAL(10, 2) NOT NULL,
+          status VARCHAR(50) DEFAULT 'unpaid',
+          paid_at TIMESTAMP WITH TIME ZONE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS rider_settlements (
+          id SERIAL PRIMARY KEY,
+          rider_id INTEGER,
+          deliveries_count INTEGER NOT NULL DEFAULT 0,
+          earnings_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+          cod_collected DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+          status VARCHAR(50) DEFAULT 'pending',
+          paid_at TIMESTAMP WITH TIME ZONE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
       await client.query(`CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);`);
       await client.query(`CREATE INDEX IF NOT EXISTS idx_products_title_gin ON products USING gin (to_tsvector('english', title));`);
       await seedDefaults(client);
@@ -1387,6 +1446,12 @@ app.put('/api/v1/admin/orders/:id', adminAuth, async (c) => {
   }
 
   if (result.rows.length === 0) throw httpError('Order not found.', 404);
+
+  // Auto-calculate financial records on delivery completion
+  if (status.toLowerCase() === 'delivered') {
+    await recordOrderSettlementAndCommission(c.env, parseInt(c.req.param('id'), 10));
+  }
+
   return c.json({ success: true, message: 'Order status updated successfully.', data: result.rows[0] });
 });
 
@@ -1821,6 +1886,9 @@ app.post('/api/v1/rider/orders/:id/deliver', authenticateUser, async (c) => {
     [id]
   );
 
+  // Auto-calculate financial records on delivery completion
+  await recordOrderSettlementAndCommission(c.env, id);
+
   return c.json({ success: true, message: 'Order marked as delivered successfully.', data: result.rows[0] });
 });
 
@@ -1990,5 +2058,194 @@ app.patch('/api/v1/admin/cod/approval-requests/:id/reject', adminAuth, async (c)
   if (result.rows.length === 0) throw httpError('Request not found or already processed.', 404);
   return c.json({ success: true, message: 'COD request rejected.', data: result.rows[0] });
 });
+
+// ─── MARKETPLACE FINANCIAL SYSTEM ────────────────────────────────────────────
+
+const recordOrderSettlementAndCommission = async (env, orderId) => {
+  try {
+    const existing = await query(env, 'SELECT id FROM commissions WHERE order_id = $1;', [orderId]);
+    if (existing.rows.length > 0) return;
+
+    const orderRes = await query(env, 'SELECT * FROM orders WHERE id = $1;', [orderId]);
+    if (orderRes.rows.length === 0) return;
+
+    const order = orderRes.rows[0];
+    const totalAmount = parseFloat(order.total_amount || 0);
+    const shopId = order.shop_id;
+    const riderId = order.rider_id;
+    const paymentMethod = order.payment_method || 'COD';
+
+    if (shopId) {
+      const shopRes = await query(env, 'SELECT commission_percentage FROM shops WHERE id = $1;', [shopId]);
+      let commissionPct = shopRes.rows[0]?.commission_percentage;
+
+      if (commissionPct === null || commissionPct === undefined) {
+        const globalRes = await query(env, "SELECT value FROM system_settings WHERE key = 'global_commission_percentage';");
+        commissionPct = globalRes.rows[0]?.value ? parseFloat(globalRes.rows[0].value) : 10.00;
+      } else {
+        commissionPct = parseFloat(commissionPct);
+      }
+
+      const commissionAmount = (totalAmount * commissionPct) / 100;
+      const shopPayable = totalAmount - commissionAmount;
+
+      await query(
+        env,
+        `INSERT INTO commissions (order_id, shop_id, gross_sales, commission_percentage, commission_amount, shop_payable)
+         VALUES ($1, $2, $3, $4, $5, $6);`,
+        [orderId, shopId, totalAmount, commissionPct, commissionAmount, shopPayable]
+      );
+
+      await query(
+        env,
+        `INSERT INTO shop_settlements (shop_id, sales_amount, commission_amount, payable_amount, status)
+         VALUES ($1, $2, $3, $4, 'unpaid');`,
+        [shopId, totalAmount, commissionAmount, shopPayable]
+      );
+    }
+
+    if (riderId) {
+      const riderEarning = 150.00;
+      const codCollected = (paymentMethod.toUpperCase() === 'COD') ? totalAmount : 0.00;
+
+      await query(
+        env,
+        `INSERT INTO rider_settlements (rider_id, deliveries_count, earnings_amount, cod_collected, status)
+         VALUES ($1, 1, $2, $3, 'pending');`,
+        [riderId, riderEarning, codCollected]
+      );
+    }
+  } catch (error) {
+    console.error(`[Settlement] Error recording commission for order ${orderId}:`, error);
+  }
+};
+
+app.get('/api/v1/admin/financials/dashboard', adminAuth, async (c) => {
+  const statsRes = await query(
+    c.env,
+    `SELECT 
+       COALESCE(SUM(gross_sales), 0) as gross_sales,
+       COALESCE(SUM(commission_amount), 0) as commission,
+       COALESCE(SUM(shop_payable), 0) as shop_payable,
+       COALESCE(SUM(refunded_amount), 0) as refunds
+     FROM commissions;`
+  );
+  
+  const riderRes = await query(
+    c.env,
+    `SELECT COALESCE(SUM(earnings_amount), 0) as rider_earnings FROM rider_settlements;`
+  );
+
+  const stats = statsRes.rows[0];
+  const rider = riderRes.rows[0];
+
+  return c.json({
+    success: true,
+    data: {
+      grossSales: parseFloat(stats.gross_sales),
+      commission: parseFloat(stats.commission),
+      shopPayable: parseFloat(stats.shop_payable),
+      riderEarnings: parseFloat(rider.rider_earnings),
+      refunds: parseFloat(stats.refunds),
+    }
+  });
+});
+
+app.get('/api/v1/admin/financials/settings', adminAuth, async (c) => {
+  const globalRes = await query(c.env, "SELECT value FROM system_settings WHERE key = 'global_commission_percentage';");
+  const globalPct = globalRes.rows[0]?.value ? parseFloat(globalRes.rows[0].value) : 10.00;
+
+  const shopsRes = await query(c.env, "SELECT id, name, commission_percentage FROM shops ORDER BY name;");
+  
+  return c.json({
+    success: true,
+    data: {
+      globalCommissionPercentage: globalPct,
+      shops: shopsRes.rows.map(s => ({
+        id: s.id,
+        name: s.name,
+        commissionPercentage: s.commission_percentage !== null ? parseFloat(s.commission_percentage) : null
+      }))
+    }
+  });
+});
+
+app.put('/api/v1/admin/financials/settings', adminAuth, async (c) => {
+  const body = await c.req.json();
+  const pct = parseFloat(body.global_commission_percentage);
+  if (isNaN(pct) || pct < 0 || pct > 100) throw httpError('Invalid commission percentage.', 400);
+
+  await query(
+    c.env,
+    "INSERT INTO system_settings (key, value) VALUES ('global_commission_percentage', $1) ON CONFLICT (key) DO UPDATE SET value = $1;",
+    [pct.toFixed(2)]
+  );
+  return c.json({ success: true, message: `Global commission percentage updated to ${pct.toFixed(2)}%` });
+});
+
+app.put('/api/v1/admin/financials/shops/:id/commission', adminAuth, async (c) => {
+  const id = parseInt(c.req.param('id'), 10);
+  const body = await c.req.json();
+  const pct = body.commission_percentage !== null ? parseFloat(body.commission_percentage) : null;
+  
+  if (pct !== null && (isNaN(pct) || pct < 0 || pct > 100)) {
+    throw httpError('Invalid commission percentage.', 400);
+  }
+
+  await query(c.env, "UPDATE shops SET commission_percentage = $1 WHERE id = $2;", [pct, id]);
+  return c.json({
+    success: true,
+    message: pct !== null 
+      ? `Commission percentage for shop updated to ${pct}%`
+      : `Shop commission set to follow global default.`
+  });
+});
+
+app.get('/api/v1/admin/financials/shop-settlements', adminAuth, async (c) => {
+  const result = await query(
+    c.env,
+    `SELECT ss.*, s.name as shop_name 
+     FROM shop_settlements ss 
+     LEFT JOIN shops s ON ss.shop_id = s.id 
+     ORDER BY ss.created_at DESC;`
+  );
+  return c.json({ success: true, data: result.rows });
+});
+
+app.patch('/api/v1/admin/financials/shop-settlements/:id/pay', adminAuth, async (c) => {
+  const id = parseInt(c.req.param('id'), 10);
+  const result = await query(
+    c.env,
+    "UPDATE shop_settlements SET status = 'paid', paid_at = NOW() WHERE id = $1 AND status = 'unpaid' RETURNING *;",
+    [id]
+  );
+  if (result.rows.length === 0) throw httpError('Settlement not found or already paid.', 404);
+  return c.json({ success: true, message: 'Shop settlement marked as paid successfully.', data: result.rows[0] });
+});
+
+app.get('/api/v1/admin/financials/rider-settlements', adminAuth, async (c) => {
+  const result = await query(
+    c.env,
+    `SELECT rs.*, r.name as rider_name, u.phone as rider_phone 
+     FROM rider_settlements rs 
+     LEFT JOIN riders r ON rs.rider_id = r.id
+     LEFT JOIN users u ON r.user_id = u.id 
+     ORDER BY rs.created_at DESC;`
+  );
+  return c.json({ success: true, data: result.rows });
+});
+
+app.patch('/api/v1/admin/financials/rider-settlements/:id/pay', adminAuth, async (c) => {
+  const id = parseInt(c.req.param('id'), 10);
+  const result = await query(
+    c.env,
+    "UPDATE rider_settlements SET status = 'paid', paid_at = NOW() WHERE id = $1 AND status = 'pending' RETURNING *;",
+    [id]
+  );
+  if (result.rows.length === 0) throw httpError('Settlement not found or already paid.', 404);
+  return c.json({ success: true, message: 'Rider settlement marked as paid successfully.', data: result.rows[0] });
+});
+
+export { recordOrderSettlementAndCommission };
 
 export default app;
